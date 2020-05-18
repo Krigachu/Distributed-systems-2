@@ -1,8 +1,7 @@
 import java.io.*;
 import java.net.*;
 
-class Participant2 extends Thread{
-
+class Participant4 extends Thread{
     private int processID;
     private int portSelected;
     private String hostName;
@@ -10,11 +9,7 @@ class Participant2 extends Thread{
     private PrintWriter out;
     private BufferedReader in;
 
-    public Participant2(){
-
-    }
-
-    public Participant2(String hostName,int portSelected){
+    public Participant4(String hostName,int portSelected){
         this.portSelected = portSelected;
         this.hostName = hostName;
     }

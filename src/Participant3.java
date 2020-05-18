@@ -1,8 +1,13 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.io.*;
 import java.net.*;
 
-class Participant2 extends Thread{
 
+class Participant3 extends Thread{
     private int processID;
     private int portSelected;
     private String hostName;
@@ -10,11 +15,7 @@ class Participant2 extends Thread{
     private PrintWriter out;
     private BufferedReader in;
 
-    public Participant2(){
-
-    }
-
-    public Participant2(String hostName,int portSelected){
+    public Participant3(String hostName,int portSelected){
         this.portSelected = portSelected;
         this.hostName = hostName;
     }
@@ -105,4 +106,5 @@ class Participant2 extends Thread{
 
 }
 //consensus can only be achieved on synchronous systems
-//setSoTimeout
+//setSoTimeout {
+

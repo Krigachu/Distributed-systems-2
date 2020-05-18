@@ -16,11 +16,14 @@ class Coordinator{
 
             Coordinator coordinator = new Coordinator();
             //coordinator.startParticipant("Kri", 4323);
-            for (int a = 0; a < 3; a++){
+            /*for (int a = 0; a < 3; a++){
                 //coordinator.startParticipant(hostname,portSelected);
                 coordinator.startParticipant("Kri", 4323);
-            }
-            coordinator.startCoordinator(4323);
+            }*/
+            coordinator.startCoordinator(4323, 10000);
+            //coordinator.startCoordinator(4323, timeoutValue);
+
+            //coordinator.sendDetailsParticipants();
 
 
             //numberOfParticipants
@@ -40,9 +43,15 @@ class Coordinator{
         }catch(Exception e){System.out.println("error "+e);}
      */
 
-    public void startCoordinator(int port) throws IOException {
+    public void startCoordinator(int port,int timeout) throws IOException {
         ss = new ServerSocket(port);
-        while(true) {
+        ss.setSoTimeout(timeout);
+
+        /*while (true) {
+            new ServiceThread(ss.accept()).start();
+        }*/
+
+        for (int a = 0 ; a < 3 ; a++) {
             new ServiceThread(ss.accept()).start();
         }
 
@@ -57,7 +66,10 @@ class Coordinator{
 
     //should send details i.e what participants are currently in consensus excluding yourself.
     public void sendDetailsParticipants(){
-        //testing
+        for(String portName: listOfParticipantPorts){
+            System.out.println(portName);
+        }
+
     }
 
 
@@ -65,6 +77,8 @@ class Coordinator{
         Socket client;
         PrintWriter out;
         BufferedReader in;
+        static ArrayList<String> listOfParticipantPorts;
+
 
         public ServiceThread(Socket c){
             client=c;
@@ -88,16 +102,27 @@ class Coordinator{
                     out.println("THIS IS AN ACK");
                     out.flush();
                     Thread.sleep(3000);
+                    //sendingDetailsParticipants();
                 }
 
                 for(String portName: listOfParticipantPorts){
                     System.out.println(portName);
                 }
-
+                out.print(listOfParticipantPorts.get(0) + listOfParticipantPorts.get(1));
+                out.flush();
+                //sendingDetailsParticipants();
                 client.close();
             }catch(Exception e){
 
             }
+        }
+
+        //should send details i.e what participants are currently in consensus excluding yourself.
+        private void sendingDetailsParticipants() {
+            for(String portName: listOfParticipantPorts){
+                System.out.println(portName);
+            }
+
         }
     }
 
