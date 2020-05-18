@@ -20,9 +20,9 @@ class Coordinator{
                 //coordinator.startParticipant(hostname,portSelected);
                 coordinator.startParticipant("Kri", 4323);
             }*/
-            coordinator.startCoordinator(4323, 10000);
+            //coordinator.startCoordinator(4323, 10000);
+            coordinator.startCoordinator(4323);
             //coordinator.startCoordinator(4323, timeoutValue);
-
             //coordinator.sendDetailsParticipants();
 
 
@@ -43,19 +43,61 @@ class Coordinator{
         }catch(Exception e){System.out.println("error "+e);}
      */
 
-    public void startCoordinator(int port,int timeout) throws IOException {
+    public void startCoordinator(int port) throws IOException {
+        ArrayList<ServiceThread> participantArray = new ArrayList<>();
         ss = new ServerSocket(port);
-        ss.setSoTimeout(timeout);
-
         /*while (true) {
             new ServiceThread(ss.accept()).start();
         }*/
 
-        for (int a = 0 ; a < 3 ; a++) {
-            new ServiceThread(ss.accept()).start();
+        int a = 0;
+        while(a < 3) {   //should be max number of participants
+
+            //new ServiceThread(ss.accept()).start();
+            participantArray.add(new ServiceThread(ss.accept()));
+
+            if (a == 2){
+                System.out.println("3 clients have joined");
+                for (ServiceThread sT: participantArray){
+                    sT.start();
+                    //System.out.println(sT.getPort());
+                    //listOfParticipantPorts.add(sT.getPort());
+                }
+                /*System.out.println("b4 port list");
+                for (String test : listOfParticipantPorts){
+                    System.out.println(test);
+                }*/
+            }
+
+            a++;
         }
 
     }
+
+    public void startCoordinator(int port,int timeout) throws IOException {
+        ss = new ServerSocket(port);
+        ss.setSoTimeout(timeout);
+
+        while (true) {
+            new ServiceThread(ss.accept()).start();
+        }
+        /*int a = 0;
+        while(a < 3) {   //should be max number of participants
+
+            new ServiceThread(ss.accept()).start();
+            //ServiceThread test = new ServiceThread(ss.accept());
+
+            if (a == 2){
+                System.out.println("3 clients have joined");
+
+            }
+
+            a++;
+        }*/
+
+    }
+//participant crashing throws tcp and time out
+//details contains list of ports -> partcipant
 
     public void startParticipant(String host, int portSelected) throws IOException {
         Participant2 participant = new Participant2();
@@ -74,10 +116,10 @@ class Coordinator{
 
 
     static class ServiceThread extends Thread{
+        String port;
         Socket client;
         PrintWriter out;
         BufferedReader in;
-        static ArrayList<String> listOfParticipantPorts;
 
 
         public ServiceThread(Socket c){
@@ -93,7 +135,8 @@ class Coordinator{
 
                 line = in.readLine();
                 System.out.println(line);
-                listOfParticipantPorts.add(line.split(" ")[1]);
+                setPort(line.split(" ")[1]);
+                System.out.println(line.split(" ")[1]);
 
                 while((line = in.readLine()) != null) {
                     System.out.println(line + " received");
@@ -103,13 +146,14 @@ class Coordinator{
                     out.flush();
                     Thread.sleep(3000);
                     //sendingDetailsParticipants();
+                    /*for(String portName: listOfParticipantPorts){
+                        System.out.println(portName);
+                    }*/
                 }
 
                 for(String portName: listOfParticipantPorts){
                     System.out.println(portName);
                 }
-                out.print(listOfParticipantPorts.get(0) + listOfParticipantPorts.get(1));
-                out.flush();
                 //sendingDetailsParticipants();
                 client.close();
             }catch(Exception e){
@@ -118,12 +162,21 @@ class Coordinator{
         }
 
         //should send details i.e what participants are currently in consensus excluding yourself.
-        private void sendingDetailsParticipants() {
+        /*private void sendingDetailsParticipants() {
             for(String portName: listOfParticipantPorts){
                 System.out.println(portName);
             }
 
+        }*/
+
+        public void setPort(String port){
+            this.port = port;
         }
+
+        public String getPort(){
+            return this.port;
+        }
+
     }
 
 

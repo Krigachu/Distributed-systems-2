@@ -9,6 +9,7 @@ class Participant2 extends Thread{
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+    private int port;
 
     public Participant2(){
 
@@ -80,12 +81,54 @@ class Participant2 extends Thread{
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             out.println("JOIN " + socket.getLocalPort());
+            Thread.sleep(2000);
+            //processID = socket.getLocalPort();
+            //System.out.println(processID);
+
+            out.flush();
+            //line = in.readLine();
+            for (int i = 0; i < 5; i++) { //while true loop here to ensure thread never shuts?
+                //out.println("TCP message " + i + " from sender "+ socket.getLocalPort());
+                out.println("TCP message " + i + " from sender 2");
+                out.flush();                                                                   //required to send messages to receiver, flush = push stream into socket
+                System.out.println("TCP message " + i + " sent");
+                //Thread.sleep(1000);
+                line = in.readLine();
+                System.out.println(line + " received");
+                //Thread.sleep(100);
+            }
+            //line = in.readLine();
+            //System.out.println(line);
+            //stopConnection();
+
+        }catch(Exception e){
+            System.out.println("error"+e);
+        }
+    }
+
+
+    /*
+    public static void main(String[] args) {
+        try {
+            int processID;
+            int portSelected;
+            String hostName;
+            Socket socket;
+            PrintWriter out;
+            BufferedReader in;
+            socket = new Socket("Kri", 4323);
+            //Socket socket = new Socket(hostName, portSelected);
+            out = new PrintWriter(socket.getOutputStream());
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String line;
+            out.println("JOIN " + socket.getLocalPort());
 
             processID = socket.getLocalPort();
             //System.out.println(processID);
             out.flush();
             for (int i = 0; i < 5; i++) { //while true loop here to ensure thread never shuts?
-                out.println("TCP message " + i + " from sender "+ socket.getLocalPort());
+                //out.println("TCP message " + i + " from sender "+ socket.getLocalPort());
+                out.println("TCP message " + i + " from sender 2");
                 out.flush();                                                                   //required to send messages to receiver, flush = push stream into socket
                 System.out.println("TCP message " + i + " sent");
                 //Thread.sleep(1000);
@@ -101,7 +144,7 @@ class Participant2 extends Thread{
             System.out.println("error"+e);
         }
     }
-
+     */
 
 }
 //consensus can only be achieved on synchronous systems
