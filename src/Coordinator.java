@@ -57,7 +57,7 @@ class Coordinator{
 
     //should send details i.e what participants are currently in consensus excluding yourself.
     public void sendDetailsParticipants(){
-
+        //testing
     }
 
 
