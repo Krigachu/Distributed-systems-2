@@ -2,11 +2,11 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 
-class Coordinator{
+class Coordinator {
     private ServerSocket ss;
     ArrayList<String> listOfParticipantPorts = new ArrayList<>();
 
-    public static void main(String [] args){
+    public static void main(String[] args) {
         try {
             //int portSelected = Integer.parseInt(args[0]);                         //port to listen on
             //int portLogger = Integer.parseInt(args[1]);                         //logger port
@@ -27,7 +27,7 @@ class Coordinator{
 
 
             //numberOfParticipants
-        } catch (Exception e){
+        } catch (Exception e) {
 
         }
     }
@@ -45,31 +45,56 @@ class Coordinator{
 
     public void startCoordinator(int port) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
+        ArrayList<String> testing = new ArrayList<>();
         ss = new ServerSocket(port);
+
         /*while (true) {
             new ServiceThread(ss.accept()).start();
         }*/
 
         int a = 0;
-        while(a < 3) {   //should be max number of participants
-
+        while (a < 3) {   //should be max number of participants
             //new ServiceThread(ss.accept()).start();
             participantArray.add(new ServiceThread(ss.accept()));
 
-            if (a == 2){
+            if (a == 2) {
                 System.out.println("3 clients have joined");
-                for (ServiceThread sT: participantArray){
+
+                //running the clients
+                for (ServiceThread sT : participantArray) {
                     sT.start();
-                    Thread.sleep(10000);
-                    System.out.println("WOOOHUUUU "+ sT.getPort());
+                }
+
+                //getting ports of each participant
+                Thread.sleep(3000);
+                for (ServiceThread sT : participantArray) {
+                    //System.out.println("WOOOHUUUU " + sT.getPort());
                     listOfParticipantPorts.add(sT.getPort());
                     sT.setListOfParticipantPorts(listOfParticipantPorts);
-                    //listOfParticipantPorts.add(sT.getPort());
+                    testing = sT.getListOfParticipantPorts();
                 }
-                //System.out.println("b4 port list");
-                /*for (String test : listOfParticipantPorts){
-                    System.out.println(test);
+
+                //testing whether setting something works
+                /*Thread.sleep(3000);
+                for (ServiceThread sT : participantArray) {
+                    sT.setPort("69420");
+                    System.out.println("has it changed port numbers");
                 }*/
+
+                //setting first check
+                Thread.sleep(3000);
+                for (ServiceThread sT : participantArray) {
+                    sT.setFirstCheck();
+                    System.out.println("Unlocking first gate");
+                }
+
+
+                Thread.sleep(3000);
+                System.out.println("b4 port list");
+                for (String test : testing) {
+                    System.out.println("WOOT " +test);
+                }
+
             }
 
             a++;
@@ -77,7 +102,7 @@ class Coordinator{
 
     }
 
-    public void startCoordinator(int port,int timeout) throws IOException {
+    public void startCoordinator(int port, int timeout) throws IOException {
         ss = new ServerSocket(port);
         ss.setSoTimeout(timeout);
 
@@ -110,39 +135,61 @@ class Coordinator{
     }
 
     //should send details i.e what participants are currently in consensus excluding yourself.
-    public void sendDetailsParticipants(){
-        for(String portName: listOfParticipantPorts){
+    public void sendDetailsParticipants() {
+        for (String portName : listOfParticipantPorts) {
             System.out.println(portName);
         }
 
     }
 
 
-    static class ServiceThread extends Thread{
+    static class ServiceThread extends Thread {
         String port;
         Socket client;
         PrintWriter out;
         BufferedReader in;
+        String temp;
+        Boolean firstCheck = true;
         private volatile ArrayList<String> listOfParticipantPorts = new ArrayList<>();
 
-        public ServiceThread(Socket c){
-            client=c;
+        public ServiceThread(Socket c) {
+            client = c;
         }
-// locks are good
-        public void run(){
-            try{
+
+        // locks are good
+        public void run() {
+            try {
                 //ArrayList<String> listOfParticipantPorts = new ArrayList<>();
                 PrintWriter out = new PrintWriter(client.getOutputStream());
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line;
 
                 line = in.readLine();
-                //System.out.println(line);
                 setPort(line.split(" ")[1]);
-                //System.out.println(line.split(" ")[1]);
-                //listOfParticipantPorts.add(line.split(" ")[1]);
+                System.out.println(line);
 
-                while((line = in.readLine()) != null) {
+                //Thread.sleep(10000);
+                //System.out.println(getPort());
+
+                //first lock
+                System.out.println("Hit first lock");
+                while (firstCheck) {
+                    Thread.sleep(2000);
+                    System.out.println("In first lock");
+                }
+                System.out.println("Exited first lock");
+
+
+                for (String portName : getListOfParticipantPorts()) {
+                    if (portName != getPort()) {
+                        temp = temp + " " +portName;
+                    }
+                }
+
+                out.println("DETAILS" + temp);
+                out.flush();
+
+                while ((line = in.readLine()) != null) {
                     System.out.println(line + " received");
                     //System.out.println(line);
                     System.out.println("Sending ack");
@@ -151,49 +198,62 @@ class Coordinator{
                     Thread.sleep(3000);
                 }
 
-                System.out.println("I HAVE FINISHED");
 
-                for(String portName: listOfParticipantPorts){
-                    System.out.println(portName);
+                /*for(int a = 0; a<5 ;a++){
+                    System.out.println(line + " received");
+                    //System.out.println(line);
+                    System.out.println("Sending ack");
+                    out.println("THIS IS AN ACK");
+                    out.flush();
+                    Thread.sleep(3000);
+                }*/
+
+                    System.out.println("I HAVE FINISHED");
+
+
+                    client.close();
+                }catch(Exception e){
+
                 }
-
-                client.close();
-
-            }catch(Exception e){
-
             }
-        }
 
-        //should send details i.e what participants are currently in consensus excluding yourself.
+            //should send details i.e what participants are currently in consensus excluding yourself.
         /*private void sendingDetailsParticipants() {
             for(String portName: listOfParticipantPorts){
                 System.out.println(portName);
+            }*/
+
+
+
+            public void setPort (String port){
+                this.port = port;
             }
 
-        }*/
+            public String getPort() {
+                return this.port;
+            }
 
-        public void setPort(String port){
-            this.port = port;
+            public void setListOfParticipantPorts (ArrayList < String > listOfParticipantPorts) {
+                this.listOfParticipantPorts = listOfParticipantPorts;
+            }
+
+            public ArrayList<String> getListOfParticipantPorts () {
+                return this.listOfParticipantPorts;
+            }
+
+            public void setFirstCheck() {
+                this.firstCheck = false;
+            }
+
         }
 
-        public String getPort(){
-            return this.port;
-        }
-
-        public void setListOfParticipantPorts(ArrayList<String> listOfParticipantPorts){
+        public void setListOfParticipantPorts(ArrayList<String> listOfParticipantPorts) {
             this.listOfParticipantPorts = listOfParticipantPorts;
         }
 
-        public ArrayList<String> getListOfParticipantPorts(){
+        public ArrayList<String> getListOfParticipantPorts() {
             return this.listOfParticipantPorts;
         }
-
-    }
-
-
-
-
-
 
 
 }

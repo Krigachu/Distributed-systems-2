@@ -8,13 +8,14 @@ class Participant{
             Socket socket = new Socket("Kri", 4323);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-           // System.out.println("THIS IS MY LOCAL PORT " + socket.getLocalPort());
+            //System.out.println("THIS IS MY LOCAL PORT " + socket.getLocalPort());
             String line;
             out.println("JOIN " + socket.getLocalPort());
             out.flush();
-            Thread.sleep(2000);
-            //line = in.readLine();
-            //System.out.println(line);
+            Thread.sleep(12000);
+
+            line = in.readLine();
+            System.out.println(line);
             for (int i = 0; i < 5; i++) { // stage 1
                 //out.println("TCP message " + i + " from sender " + socket.getLocalPort());
                 out.println("TCP message " + i + " from sender 1");
@@ -25,9 +26,10 @@ class Participant{
                 System.out.println(line + " received");
                 //Thread.sleep(100);
             }
-            for(;;){ // stage 2
+            System.out.println("Testing");
+            /*for(;;){ // stage 2
 
-            }
+            }*/
         }catch(Exception e){
             System.out.println("error"+e);
         }
