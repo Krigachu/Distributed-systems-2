@@ -43,7 +43,7 @@ class Coordinator{
         }catch(Exception e){System.out.println("error "+e);}
      */
 
-    public void startCoordinator(int port) throws IOException {
+    public void startCoordinator(int port) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
         ss = new ServerSocket(port);
         /*while (true) {
@@ -60,11 +60,14 @@ class Coordinator{
                 System.out.println("3 clients have joined");
                 for (ServiceThread sT: participantArray){
                     sT.start();
-                    //System.out.println(sT.getPort());
+                    Thread.sleep(10000);
+                    System.out.println("WOOOHUUUU "+ sT.getPort());
+                    listOfParticipantPorts.add(sT.getPort());
+                    sT.setListOfParticipantPorts(listOfParticipantPorts);
                     //listOfParticipantPorts.add(sT.getPort());
                 }
-                /*System.out.println("b4 port list");
-                for (String test : listOfParticipantPorts){
+                //System.out.println("b4 port list");
+                /*for (String test : listOfParticipantPorts){
                     System.out.println(test);
                 }*/
             }
@@ -120,23 +123,24 @@ class Coordinator{
         Socket client;
         PrintWriter out;
         BufferedReader in;
-
+        private volatile ArrayList<String> listOfParticipantPorts = new ArrayList<>();
 
         public ServiceThread(Socket c){
             client=c;
         }
-
+// locks are good
         public void run(){
             try{
-                ArrayList<String> listOfParticipantPorts = new ArrayList<>();
+                //ArrayList<String> listOfParticipantPorts = new ArrayList<>();
                 PrintWriter out = new PrintWriter(client.getOutputStream());
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line;
 
                 line = in.readLine();
-                System.out.println(line);
+                //System.out.println(line);
                 setPort(line.split(" ")[1]);
-                System.out.println(line.split(" ")[1]);
+                //System.out.println(line.split(" ")[1]);
+                //listOfParticipantPorts.add(line.split(" ")[1]);
 
                 while((line = in.readLine()) != null) {
                     System.out.println(line + " received");
@@ -145,17 +149,16 @@ class Coordinator{
                     out.println("THIS IS AN ACK");
                     out.flush();
                     Thread.sleep(3000);
-                    //sendingDetailsParticipants();
-                    /*for(String portName: listOfParticipantPorts){
-                        System.out.println(portName);
-                    }*/
                 }
+
+                System.out.println("I HAVE FINISHED");
 
                 for(String portName: listOfParticipantPorts){
                     System.out.println(portName);
                 }
-                //sendingDetailsParticipants();
+
                 client.close();
+
             }catch(Exception e){
 
             }
@@ -177,7 +180,20 @@ class Coordinator{
             return this.port;
         }
 
+        public void setListOfParticipantPorts(ArrayList<String> listOfParticipantPorts){
+            this.listOfParticipantPorts = listOfParticipantPorts;
+        }
+
+        public ArrayList<String> getListOfParticipantPorts(){
+            return this.listOfParticipantPorts;
+        }
+
     }
+
+
+
+
+
 
 
 }

@@ -81,7 +81,8 @@ class Participant4 extends Thread{
             //System.out.println(processID);
             out.flush();
             //line = in.readLine();
-            for (int i = 0; i < 1; i++) { //while true loop here to ensure thread never shuts?
+            //System.out.println(line);
+            for (int i = 0; i < 1; i++) { //while true loop here to ensure thread never shuts? //stage 1
                 //out.println("TCP message " + i + " from sender "+ socket.getLocalPort());
                 out.println("TCP message " + i + " from sender 4");
                 out.flush();                                                                   //required to send messages to receiver, flush = push stream into socket
@@ -90,6 +91,9 @@ class Participant4 extends Thread{
                 line = in.readLine();
                 System.out.println(line + " received");
                 //Thread.sleep(100);
+            }
+            for(;;){ //stage 2
+
             }
             //line = in.readLine();
             //System.out.println(line);

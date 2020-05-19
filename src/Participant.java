@@ -15,7 +15,7 @@ class Participant{
             Thread.sleep(2000);
             //line = in.readLine();
             //System.out.println(line);
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 5; i++) { // stage 1
                 //out.println("TCP message " + i + " from sender " + socket.getLocalPort());
                 out.println("TCP message " + i + " from sender 1");
                 out.flush();                                               //required to send messages to receiver, flush = push stream into socket
@@ -24,6 +24,9 @@ class Participant{
                 line = in.readLine();
                 System.out.println(line + " received");
                 //Thread.sleep(100);
+            }
+            for(;;){ // stage 2
+
             }
         }catch(Exception e){
             System.out.println("error"+e);
