@@ -79,16 +79,20 @@ class Participant3 extends Thread{
             //Socket socket = new Socket(hostName, portSelected);
             out = new PrintWriter(socket.getOutputStream());
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
             String line;
             out.println("JOIN " + socket.getLocalPort());
+            out.flush();
             Thread.sleep(2000);
 
-            processID = socket.getLocalPort();
-            //System.out.println(processID);
-            out.flush();
-            Thread.sleep(12000);
+            //reads other participants
             line = in.readLine();
             System.out.println(line);
+
+            //reads voting options
+            line = in.readLine();
+            System.out.println(line);
+
             for (int i = 0; i < 5; i++) { //while true loop here to ensure thread never shuts? // stage 1
                 //out.println("TCP message " + i + " from sender "+ socket.getLocalPort());
                 out.println("TCP message " + i + " from sender 3");

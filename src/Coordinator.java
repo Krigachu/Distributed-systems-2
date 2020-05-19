@@ -46,6 +46,9 @@ class Coordinator {
     public void startCoordinator(int port) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
         ArrayList<String> testing = new ArrayList<>();
+        ArrayList<String> votingOptions = new ArrayList<>();
+
+        //this.votingOptions = votingOptions; // parameter
         ss = new ServerSocket(port);
 
         /*while (true) {
@@ -58,6 +61,10 @@ class Coordinator {
             participantArray.add(new ServiceThread(ss.accept()));
 
             if (a == 2) {
+                votingOptions.add("A");
+                votingOptions.add("B");
+                votingOptions.add("C");
+
                 System.out.println("3 clients have joined");
 
                 //running the clients
@@ -88,12 +95,28 @@ class Coordinator {
                     System.out.println("Unlocking first gate");
                 }
 
+                //providing voting options for participants
+                Thread.sleep(3000);
+                for (ServiceThread sT : participantArray){
+                    sT.setVotingOptions(votingOptions);
+                    System.out.println("Setting voting options");
+                }
 
+                //setting second check
+                Thread.sleep(3000);
+                for (ServiceThread sT : participantArray) {
+                    sT.setSecondCheck();
+                    System.out.println("Unlocking second gate");
+                }
+
+
+
+                /*//testing what participants have been added
                 Thread.sleep(3000);
                 System.out.println("b4 port list");
                 for (String test : testing) {
                     System.out.println("WOOT " +test);
-                }
+                }*/
 
             }
 
@@ -148,9 +171,12 @@ class Coordinator {
         Socket client;
         PrintWriter out;
         BufferedReader in;
-        String temp;
+        String detailsMsg = "";
+        String votingOptionsMsg = "";
         Boolean firstCheck = true;
+        Boolean secondCheck = true;
         private volatile ArrayList<String> listOfParticipantPorts = new ArrayList<>();
+        private volatile ArrayList<String> votingOptions = new ArrayList<>();
 
         public ServiceThread(Socket c) {
             client = c;
@@ -179,15 +205,32 @@ class Coordinator {
                 }
                 System.out.println("Exited first lock");
 
-
+                //sending details block
                 for (String portName : getListOfParticipantPorts()) {
-                    if (portName != getPort()) {
-                        temp = temp + " " +portName;
+                    if (!(portName == getPort())) {
+                        detailsMsg = detailsMsg + " " +portName;
                     }
                 }
 
-                out.println("DETAILS" + temp);
+                out.println("DETAILS" + detailsMsg);
                 out.flush();
+
+                //second lock
+                System.out.println("Hit second lock");
+                while (secondCheck) {
+                    Thread.sleep(2000);
+                    System.out.println("In second lock");
+                }
+                System.out.println("Exited second lock");
+
+                //sending vote options
+                for (String voteOption : getVotingOptions()) {
+                    votingOptionsMsg = votingOptionsMsg + " " + voteOption;
+                }
+
+                out.println("VOTING_OPTIONS" + votingOptionsMsg);
+                out.flush();
+
 
                 while ((line = in.readLine()) != null) {
                     System.out.println(line + " received");
@@ -244,8 +287,20 @@ class Coordinator {
             public void setFirstCheck() {
                 this.firstCheck = false;
             }
+            public void setSecondCheck() {
+            this.secondCheck = false;
+        }
+
+            public void setVotingOptions(ArrayList<String> votingOptions){
+                this.votingOptions = votingOptions;
+            }
+
+            public ArrayList<String> getVotingOptions(){
+                return this.votingOptions;
+            }
 
         }
+
 
         public void setListOfParticipantPorts(ArrayList<String> listOfParticipantPorts) {
             this.listOfParticipantPorts = listOfParticipantPorts;
