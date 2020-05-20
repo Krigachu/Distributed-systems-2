@@ -71,9 +71,9 @@ class Participant2 extends Thread{
 
     public static void main(String[] args) {
         try {
+            //int portNumber = Integer.parseInt(args[2]);         //port number
+            int portNumber = 1235;
             Random RNG = new Random();
-            int processID;
-            int portSelected;
             String hostName;
             Socket socket;
             PrintWriter out;
@@ -85,8 +85,10 @@ class Participant2 extends Thread{
             ArrayList<String> votingOptions = new ArrayList<>();
             String voteChosen;
 
+            //sends join msg
             String line;
-            out.println("JOIN " + socket.getLocalPort());
+            //out.println("JOIN " + socket.getLocalPort());
+            out.println("JOIN " + portNumber);
             out.flush();
             Thread.sleep(2000);
 

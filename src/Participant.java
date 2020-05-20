@@ -5,8 +5,17 @@ import java.util.Random;
 
 class Participant{
 
+    //int portSelected = Integer.parseInt(args[0]);                         //port to listen on
+    //int portLogger = Integer.parseInt(args[1]);                         //logger port
+    //int numberOfParticipants = Integer.parseInt(args[2]);         //number of participants
+    //int timeoutValue = Integer.parseInt(args[3]);                 //time out value
+    //voting options = the rest of the input arguments
+
     public static void main(String [] args) throws IOException {
         try {
+            //int portNumber = Integer.parseInt(args[2]);         //port number
+            //int portNumber = 1234;
+            int portNumber = Integer.parseInt(args[0]);
             Random RNG = new Random();
             Socket socket = new Socket("Kri", 4323);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
@@ -15,8 +24,10 @@ class Participant{
             String voteChosen;
             //System.out.println("THIS IS MY LOCAL PORT " + socket.getLocalPort());
 
+            //sends join msg
             String line;
-            out.println("JOIN " + socket.getLocalPort());
+            //out.println("JOIN " + socket.getLocalPort());
+            out.println("JOIN " + portNumber);
             out.flush();
             Thread.sleep(2000);
 
@@ -41,6 +52,7 @@ class Participant{
             //participant is now choosing their vote.
             voteChosen = votingOptions.get(RNG.nextInt(votingOptions.size()));
             System.out.println(voteChosen);
+
 
 
 
@@ -104,3 +116,30 @@ class Participant{
 }
 //consensus can only be achieved on synchronous systems
 
+class TCPReceiverThreadedClass{
+
+    public static void main(String [] args){
+        try{
+            ServerSocket ss = new ServerSocket(4322);
+            for(;;){
+                try{Socket client = ss.accept();
+                    new Thread(new ServiceThread(client)).start();
+                }catch(Exception e){System.out.println("error "+e);}
+            }
+        }catch(Exception e){System.out.println("error "+e);}
+    }
+
+    static class ServiceThread implements Runnable{
+        Socket client;
+        ServiceThread(Socket c){client=c;}
+        public void run(){try{
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(client.getInputStream()));
+            String line;
+            while((line = in.readLine()) != null)
+                System.out.println(line+" received");
+            client.close(); }catch(Exception e){}
+        }
+    }
+
+}
