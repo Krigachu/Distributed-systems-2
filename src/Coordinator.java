@@ -61,6 +61,7 @@ class Coordinator {
             participantArray.add(new ServiceThread(ss.accept()));
 
             if (a == 2) {
+                ss.setSoTimeout(1000);
                 votingOptions.add("A");
                 votingOptions.add("B");
                 votingOptions.add("C");
@@ -175,6 +176,7 @@ class Coordinator {
         String votingOptionsMsg = "";
         Boolean firstCheck = true;
         Boolean secondCheck = true;
+        Boolean thirdCheck = true;
         private volatile ArrayList<String> listOfParticipantPorts = new ArrayList<>();
         private volatile ArrayList<String> votingOptions = new ArrayList<>();
 
@@ -230,6 +232,15 @@ class Coordinator {
 
                 out.println("VOTING_OPTIONS" + votingOptionsMsg);
                 out.flush();
+
+                //third lock
+                /*System.out.println("Hit third lock");
+                while (thirdCheck) {
+                    Thread.sleep(2000);
+                    System.out.println("In third lock");
+                }
+                System.out.println("Exited third lock");*/
+
 
 
                 while ((line = in.readLine()) != null) {
@@ -289,6 +300,9 @@ class Coordinator {
             }
             public void setSecondCheck() {
             this.secondCheck = false;
+        }
+            public void setThirdCheck() {
+            this.thirdCheck = false;
         }
 
             public void setVotingOptions(ArrayList<String> votingOptions){
