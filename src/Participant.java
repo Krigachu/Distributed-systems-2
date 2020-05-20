@@ -1,13 +1,18 @@
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Random;
 
 class Participant{
 
     public static void main(String [] args) throws IOException {
         try {
+            Random RNG = new Random();
             Socket socket = new Socket("Kri", 4323);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            ArrayList<String> votingOptions = new ArrayList<>();
+            String voteChosen;
             //System.out.println("THIS IS MY LOCAL PORT " + socket.getLocalPort());
 
             String line;
@@ -22,6 +27,22 @@ class Participant{
             //reads voting options
             line = in.readLine();
             System.out.println(line);
+
+            //adds the options for voting to participant
+            for (int a = 1; a < line.split(" ").length ; a++){
+                votingOptions.add(line.split(" ")[a]);
+            }
+
+            //testing printing voting options
+            /*for (String voteOptionsTesting : votingOptions){
+                System.out.println(voteOptionsTesting);
+            }*/
+
+            //participant is now choosing their vote.
+            voteChosen = votingOptions.get(RNG.nextInt(votingOptions.size()));
+            System.out.println(voteChosen);
+
+
 
             for (int i = 0; i < 5; i++) { // stage 1
                 //out.println("TCP message " + i + " from sender " + socket.getLocalPort());

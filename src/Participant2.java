@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Random;
 
 class Participant2 extends Thread{
 
@@ -69,6 +71,7 @@ class Participant2 extends Thread{
 
     public static void main(String[] args) {
         try {
+            Random RNG = new Random();
             int processID;
             int portSelected;
             String hostName;
@@ -79,6 +82,8 @@ class Participant2 extends Thread{
             //Socket socket = new Socket(hostName, portSelected);
             out = new PrintWriter(socket.getOutputStream());
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            ArrayList<String> votingOptions = new ArrayList<>();
+            String voteChosen;
 
             String line;
             out.println("JOIN " + socket.getLocalPort());
@@ -92,6 +97,20 @@ class Participant2 extends Thread{
             //reads voting options
             line = in.readLine();
             System.out.println(line);
+
+            //adds the options for voting to participant
+            for (int a = 1; a < line.split(" ").length ; a++){
+                votingOptions.add(line.split(" ")[a]);
+            }
+
+            //testing printing voting options
+            /*for (String voteOptionsTesting : votingOptions){
+                System.out.println(voteOptionsTesting);
+            }*/
+
+            //participant is now choosing their vote.
+            voteChosen = votingOptions.get(RNG.nextInt(votingOptions.size()));
+            System.out.println(voteChosen);
 
             for (int i = 0; i < 5; i++) { //while true loop here to ensure thread never shuts? // stage 1
                 //out.println("TCP message " + i + " from sender "+ socket.getLocalPort());
@@ -116,7 +135,6 @@ class Participant2 extends Thread{
             System.out.println("error"+e);
         }
     }
-
 
     /*
     public static void main(String[] args) {

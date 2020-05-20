@@ -312,3 +312,6 @@ class Coordinator {
 
 
 }
+// vote is selected only once,
+// first vote is simple, send what u voted to others
+// subsequent votes are u discovering what everybody else voted for. -> send the information u do know to others.
