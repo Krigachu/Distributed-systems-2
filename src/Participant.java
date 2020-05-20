@@ -84,6 +84,7 @@ class Participant{
                                 pT.start();
                             }
 
+
                         }
                     }catch(Exception e){System.out.println("error "+e);}
                 }
@@ -114,14 +115,14 @@ class Participant{
     static class ParticipantCommunication extends Thread{
         Socket client;
         String selfPort;
-        PrintWriter out;
-        BufferedReader in;
+        //PrintWriter out;
+        //BufferedReader in;
         ParticipantCommunication(Socket c, String port){client=c;this.selfPort = port;}
 
         //participant to participant comms
         //use synchro stuff, idiot
         public void run(){
-            try{
+            try {
                 System.out.println("IS THIS THREAD RUNNING?");
                 PrintWriter out = new PrintWriter(client.getOutputStream());
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
@@ -130,14 +131,20 @@ class Participant{
                 System.out.println("HELLO 1");
                 //testing comms
                 out.println("COMMUNICATING TO " + client.getPort() + " FROM " + selfPort);
-                System.out.println("HELLO 1.5");
-                out.flush();
-
-                System.out.println("HELLO 2");
-                line = in.readLine();
-                System.out.println("HELLO 2.5");
                 Thread.sleep(5000);
-                System.out.println(line);
+                out.flush();
+                System.out.println("HELLO 1.5");
+
+
+                //line = in.readLine();
+                if (!in.ready()){
+                    System.out.println("ITS EMPTY");
+                }else{
+                    System.out.println("ITS NOT EMPTY");
+                }
+
+                System.out.println("HELLO 2.5");
+                System.out.println(in.readLine());
                 System.out.println("HELLO 3");
 
 
