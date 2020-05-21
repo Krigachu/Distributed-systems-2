@@ -19,7 +19,8 @@ class Participant{
             Socket socket = new Socket(InetAddress.getLocalHost(), 4323);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            ArrayList<ParticipantCommunication> particpantThreadArray = new ArrayList<>();
+            ArrayList<ParticipantReceiver> participantReceivers = new ArrayList<>();
+            ArrayList<ParticipantSender> participantSenders = new ArrayList<>();
             ArrayList<String> otherParticipants = new ArrayList<>();
             ArrayList<String> votingOptions = new ArrayList<>();
             String voteChosen;
@@ -67,27 +68,70 @@ class Participant{
 
             //---------------------------------PARTICIPANT COMMS---------------------------------------------------
             try{
+                //setting up own socket
                 ServerSocket ss = new ServerSocket(portNumber);
-                for(int b = 0 ; b < otherParticipants.size(); b++){
-                    try{
-                        for (String otherPorts : otherParticipants){
-                            Socket socketForOthers = new Socket(InetAddress.getLocalHost(),Integer.parseInt(otherPorts));
+                for(int b = 0 ; b < otherParticipants.size(); b++) {
+                    try {
+
+                        //setting up the sockets to other ports
+                        if (!(portNumber == Integer.parseInt(otherParticipants.get(b)))){
+                             participantSenders.add(new ParticipantSender(String.valueOf(portNumber),Integer.parseInt(otherParticipants.get(b))));
                         }
 
-                        System.out.println("WORKING");
-                        particpantThreadArray.add(new ParticipantCommunication(ss.accept(),String.valueOf(portNumber)));
+                        if (b == otherParticipants.size()-1) {
+                            //starting the senders
+                            for(ParticipantSender pS : participantSenders){
+                                pS.start();
+                            }
+
+                            //getting the listeners ready
+                            for (int c = 0; c < otherParticipants.size(); c++) {
+                                if (!(portNumber == Integer.parseInt(otherParticipants.get(b)))) {
+                                    Socket client = ss.accept();
+                                    participantReceivers.add(new ParticipantReceiver(client,String.valueOf(portNumber)));
+                                }
+                            }
+
+                            //starting the listeners
+                            for (ParticipantReceiver pR : participantReceivers){
+                                pR.start();
+                            }
+
+                        }
+                    } catch (Exception e) {
+
+                    }
+                }
+
+                /*
+                for(int b = 0 ; b < otherParticipants.size(); b++){
+                    try{
+                        if (portNumber < Integer.parseInt(otherParticipants.get(b)) ){
+                            Socket socketForOthers = new Socket(InetAddress.getLocalHost(),Integer.parseInt(otherParticipants.get(b)));
+                        }
+
+                        //System.out.println("WORKING");
+                        //particpantThreadArray.add(new ParticipantCommunication(ss.accept(),String.valueOf(portNumber)));
 
                         if (b == otherParticipants.size()-1){
+                            for (int c = 0 ; c < otherParticipants.size(); c++){
+                                if(portNumber > Integer.parseInt(otherParticipants.get(c))) {
+                                    participantReceivers.add(new ParticipantReceiver(ss.accept(), String.valueOf(portNumber)));
+                                }
+                            }
                             System.out.println("YOU GOT IN THE LOOP");
+
                             //this is where the sheet begins
-                            for (ParticipantCommunication pT : particpantThreadArray){
+                            for (ParticipantCommunication pT : participantThreadArray){
                                 pT.start();
                             }
 
 
-                        }
+
                     }catch(Exception e){System.out.println("error "+e);}
-                }
+                }*/
+
+
                 System.out.println("Out of the for loop");
             }catch(Exception e){System.out.println("error "+e);}
 
@@ -112,19 +156,54 @@ class Participant{
         }
     }
 
-    static class ParticipantCommunication extends Thread{
+    public static int getLargestPortNumber(ArrayList<String> otherParticipants){
+        int a = 0;
+        for(String temp : otherParticipants){
+            if (a < Integer.parseInt(temp)){
+                a = Integer.parseInt(temp);
+            }
+        }
+        return a;
+    }
+
+    public static int getSmallestPortNumber(ArrayList<String> otherParticipants){
+        int a = Integer.MAX_VALUE;
+        for(String temp : otherParticipants){
+            if (a > Integer.parseInt(temp)){
+                a = Integer.parseInt(temp);
+            }
+        }
+        return a;
+    }
+
+    static class ParticipantReceiver extends Thread {
         Socket client;
         String selfPort;
         Random RNG = new Random();
+
         //PrintWriter out;
         //BufferedReader in;
-        ParticipantCommunication(Socket c, String port){client=c;this.selfPort = port;}
+        ParticipantReceiver(Socket c, String port) {
+            client = c;
+            this.selfPort = port;
+        }
 
         //participant to participant comms
         //use synchro stuff, idiot
-        public void run(){
+        public void run() {
             try {
-                System.out.println("IS THIS THREAD RUNNING?");
+                System.out.println("IS THIS THREAD RUNNING? -> receiver");
+                PrintWriter out = new PrintWriter(client.getOutputStream());
+                BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                String line;
+
+                Thread.sleep(12000);
+
+                while((line = in.readLine()) != null)
+                    System.out.println(line+ " received");
+
+                /*
+                System.out.println("IS THIS THREAD RUNNING? -> receiver");
                 PrintWriter out = new PrintWriter(client.getOutputStream());
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line;
@@ -132,34 +211,109 @@ class Participant{
                 System.out.println("HELLO 1");
 
                 //testing comms
-                Thread.sleep(RNG.nextInt(1500)+2000);
+                Thread.sleep(RNG.nextInt(1500) + 2000);
                 out.println("COMMUNICATING TO " + client.getPort() + " FROM " + selfPort);
                 Thread.sleep(5000);
                 out.flush();
                 System.out.println("HELLO 1.5");
 
 
-                synchronized (selfPort) {
+
+                //line = in.readLine();
+                if (!in.ready()) {
+                    System.out.println("ITS EMPTY");
+                } else {
+                    System.out.println("ITS NOT EMPTY");
+                }
+
+                System.out.println("HELLO 2.5");
+                System.out.println(in.readLine());
+                System.out.println("HELLO 3");
+
+
+                //while((line = in.readLine()) != null)
+                //System.out.println(line+" received");
+                */
+                client.close();
+            } catch (Exception e) {
+
+            }
+        }
+
+    }
+
+    static class ParticipantSender extends Thread{
+            Socket client;
+            String selfPort;
+            int otherPort;
+            Random RNG = new Random();
+            Boolean zerothCheck = true;
+            Boolean firstCheck = true;
+            //PrintWriter out;
+            //BufferedReader in;
+
+            ParticipantSender(String myPort, int otherPort){
+                //client=c;
+                this.selfPort = myPort;
+                this.otherPort = otherPort;
+            }
+
+            //participant to participant comms
+            //use synchro stuff, idiot
+            public void run(){
+                try {
+                    Socket client = new Socket(InetAddress.getLocalHost(),otherPort);
+                    setClient(client);
+                    setZerothCheck();
+
+                    System.out.println("IS THIS THREAD RUNNING? -> sender");
+                    PrintWriter out = new PrintWriter(client.getOutputStream());
+                    BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                    String line;
+
+                    System.out.println("HELLO 1");
+
+                    //testing comms
+                    Thread.sleep(RNG.nextInt(1500)+2000);
+                    out.println("COMMUNICATING TO " + client.getPort() + " FROM " + selfPort);
+                    Thread.sleep(5000);
+                    out.flush();
+                    System.out.println("HELLO 1.5");
+
+
+                    /*
                     //line = in.readLine();
                     if (!in.ready()) {
                         System.out.println("ITS EMPTY");
                     } else {
                         System.out.println("ITS NOT EMPTY");
                     }
-
                     System.out.println("HELLO 2.5");
                     System.out.println(in.readLine());
                     System.out.println("HELLO 3");
+                    */
+
+
+                    //while((line = in.readLine()) != null)
+                    //System.out.println(line+" received");
+
+                    client.close();
+                }catch(Exception e){
+
                 }
-
-                //while((line = in.readLine()) != null)
-                //System.out.println(line+" received");
-
-                client.close();
-            }catch(Exception e){
-
             }
-        }
+
+            public void setClient(Socket client){
+                this.client = client;
+            }
+
+            public Socket getClient(){
+                return this.client;
+            }
+
+             public void setZerothCheck() {
+                this.zerothCheck = false;
+            }
     }
 
     /*
