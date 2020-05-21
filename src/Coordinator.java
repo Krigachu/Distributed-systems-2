@@ -47,6 +47,7 @@ class Coordinator {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
         ArrayList<String> testing = new ArrayList<>();
         ArrayList<String> votingOptions = new ArrayList<>();
+        System.out.println(numParticipants + " are expected to join");
 
         //this.votingOptions = votingOptions; // parameter
         ss = new ServerSocket(port);
@@ -66,7 +67,7 @@ class Coordinator {
                 votingOptions.add("B");
                 votingOptions.add("C");
 
-                System.out.println( numParticipants+ "  clients have joined");
+                System.out.println( numParticipants+ " clients have joined");
 
                 //running the clients
                 for (ServiceThread sT : participantArray) {

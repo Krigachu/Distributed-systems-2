@@ -132,7 +132,7 @@ class Participant{
                 }*/
 
 
-                System.out.println("Out of the for loop");
+                //System.out.println("Out of the for loop");
             }catch(Exception e){System.out.println("error "+e);}
 
             //------------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ class Participant{
                 System.out.println(line + " received");
                 //Thread.sleep(100);
             }*/
-            System.out.println("Testing");
+            //System.out.println("Testing");
             /*for(;;){ // stage 2
 
             }*/
@@ -271,15 +271,12 @@ class Participant{
                     BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                     String line;
 
-                    System.out.println("HELLO 1");
 
                     //testing comms
-                    Thread.sleep(RNG.nextInt(1500)+2000);
+                    //Thread.sleep(RNG.nextInt(1500)+2000);
                     out.println("COMMUNICATING TO " + client.getPort() + " FROM " + selfPort);
-                    Thread.sleep(5000);
+                    //Thread.sleep(5000);
                     out.flush();
-                    System.out.println("HELLO 1.5");
-
 
                     /*
                     //line = in.readLine();
