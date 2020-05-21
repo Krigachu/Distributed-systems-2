@@ -10,7 +10,7 @@ class Coordinator {
         try {
             //int portSelected = Integer.parseInt(args[0]);                         //port to listen on
             //int portLogger = Integer.parseInt(args[1]);                         //logger port
-            //int numberOfParticipants = Integer.parseInt(args[2]);         //number of participants
+            int numberOfParticipants = Integer.parseInt(args[0]);         //number of participants
             //int timeoutValue = Integer.parseInt(args[3]);                 //time out value
             //voting options = the rest of the input arguments
 
@@ -21,7 +21,7 @@ class Coordinator {
                 coordinator.startParticipant("Kri", 4323);
             }*/
             //coordinator.startCoordinator(4323, 10000);
-            coordinator.startCoordinator(4323);
+            coordinator.startCoordinator(4323,numberOfParticipants);
             //coordinator.startCoordinator(4323, timeoutValue);
             //coordinator.sendDetailsParticipants();
 
@@ -43,7 +43,7 @@ class Coordinator {
         }catch(Exception e){System.out.println("error "+e);}
      */
 
-    public void startCoordinator(int port) throws Exception {
+    public void startCoordinator(int port,int numParticipants) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
         ArrayList<String> testing = new ArrayList<>();
         ArrayList<String> votingOptions = new ArrayList<>();
@@ -56,17 +56,17 @@ class Coordinator {
         }*/
 
         int a = 0;
-        while (a < 3) {   //should be max number of participants
+        while (a < numParticipants) {   //should be max number of participants
             //new ServiceThread(ss.accept()).start();
             participantArray.add(new ServiceThread(ss.accept()));
 
-            if (a == 2) {
+            if (a == (numParticipants-1)) {
                 ss.setSoTimeout(1000);
                 votingOptions.add("A");
                 votingOptions.add("B");
                 votingOptions.add("C");
 
-                System.out.println("3 clients have joined");
+                System.out.println( numParticipants+ "  clients have joined");
 
                 //running the clients
                 for (ServiceThread sT : participantArray) {
@@ -125,7 +125,7 @@ class Coordinator {
         }
 
     }
-
+/*
     public void startCoordinator(int port, int timeout) throws IOException {
         ss = new ServerSocket(port);
         ss.setSoTimeout(timeout);
@@ -145,10 +145,12 @@ class Coordinator {
             }
 
             a++;
-        }*/
+        }
 
     }
-//participant crashing throws tcp and time out
+    */
+
+    //participant crashing throws tcp and time out
 //details contains list of ports -> partcipant
 
     public void startParticipant(String host, int portSelected) throws IOException {

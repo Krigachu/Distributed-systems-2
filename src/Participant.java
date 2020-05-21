@@ -115,6 +115,7 @@ class Participant{
     static class ParticipantCommunication extends Thread{
         Socket client;
         String selfPort;
+        Random RNG = new Random();
         //PrintWriter out;
         //BufferedReader in;
         ParticipantCommunication(Socket c, String port){client=c;this.selfPort = port;}
@@ -129,24 +130,27 @@ class Participant{
                 String line;
 
                 System.out.println("HELLO 1");
+
                 //testing comms
+                Thread.sleep(RNG.nextInt(1500)+2000);
                 out.println("COMMUNICATING TO " + client.getPort() + " FROM " + selfPort);
                 Thread.sleep(5000);
                 out.flush();
                 System.out.println("HELLO 1.5");
 
 
-                //line = in.readLine();
-                if (!in.ready()){
-                    System.out.println("ITS EMPTY");
-                }else{
-                    System.out.println("ITS NOT EMPTY");
+                synchronized (selfPort) {
+                    //line = in.readLine();
+                    if (!in.ready()) {
+                        System.out.println("ITS EMPTY");
+                    } else {
+                        System.out.println("ITS NOT EMPTY");
+                    }
+
+                    System.out.println("HELLO 2.5");
+                    System.out.println(in.readLine());
+                    System.out.println("HELLO 3");
                 }
-
-                System.out.println("HELLO 2.5");
-                System.out.println(in.readLine());
-                System.out.println("HELLO 3");
-
 
                 //while((line = in.readLine()) != null)
                 //System.out.println(line+" received");
