@@ -75,12 +75,17 @@ class Coordinator {
                 }
 
                 //getting ports of each participant
-                Thread.sleep(3000);
+                Thread.sleep(2000);
                 for (ServiceThread sT : participantArray) {
                     //System.out.println("WOOOHUUUU " + sT.getPort());
                     listOfParticipantPorts.add(sT.getPort());
                     sT.setListOfParticipantPorts(listOfParticipantPorts);
                     testing = sT.getListOfParticipantPorts();
+                }
+
+                //passing the numOfParticipants
+                for (ServiceThread sT : participantArray) {
+                    sT.setNum(numParticipants);
                 }
 
                 //testing whether setting something works
@@ -91,21 +96,21 @@ class Coordinator {
                 }*/
 
                 //setting first check
-                Thread.sleep(3000);
+                Thread.sleep(2000);
                 for (ServiceThread sT : participantArray) {
                     sT.setFirstCheck();
                     System.out.println("Unlocking first gate");
                 }
 
                 //providing voting options for participants
-                Thread.sleep(3000);
+                Thread.sleep(2000);
                 for (ServiceThread sT : participantArray){
                     sT.setVotingOptions(votingOptions);
                     System.out.println("Setting voting options");
                 }
 
                 //setting second check
-                Thread.sleep(3000);
+                Thread.sleep(2000);
                 for (ServiceThread sT : participantArray) {
                     sT.setSecondCheck();
                     System.out.println("Unlocking second gate");
@@ -175,6 +180,7 @@ class Coordinator {
         Socket client;
         PrintWriter out;
         BufferedReader in;
+        int numOfParticipants;
         String detailsMsg = "";
         String votingOptionsMsg = "";
         Boolean firstCheck = true;
@@ -209,6 +215,10 @@ class Coordinator {
                     System.out.println("In first lock");
                 }
                 System.out.println("Exited first lock");
+
+                //sending num of participants
+                out.println(numOfParticipants+" OF PARTICIPANTS");
+                out.flush();
 
                 //sending details block
                 for (String portName : getListOfParticipantPorts()) {
@@ -314,6 +324,9 @@ class Coordinator {
 
             public ArrayList<String> getVotingOptions(){
                 return this.votingOptions;
+            }
+            public void setNum(int numOfParticipants){
+                this.numOfParticipants = numOfParticipants;
             }
 
         }
