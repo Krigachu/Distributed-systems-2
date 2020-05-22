@@ -8,11 +8,15 @@ class Coordinator {
 
     public static void main(String[] args) {
         try {
-            //int portSelected = Integer.parseInt(args[0]);                         //port to listen on
-            //int portLogger = Integer.parseInt(args[1]);                         //logger port
-            int numberOfParticipants = Integer.parseInt(args[0]);         //number of participants
-            //int timeoutValue = Integer.parseInt(args[3]);                 //time out value
-            //voting options = the rest of the input arguments
+            int portSelected = Integer.parseInt(args[0]);                         //port to listen on
+            int portLogger = Integer.parseInt(args[1]);                         //logger port
+            int numberOfParticipants = Integer.parseInt(args[2]);         //number of participants
+            int timeoutValue = Integer.parseInt(args[3]);                 //time out value
+            ArrayList<String> votingOptions = new ArrayList<>();
+            for (int a = 4 ;a < args.length ; a++){
+                votingOptions.add(args[a]);
+
+            }
 
             Coordinator coordinator = new Coordinator();
             //coordinator.startParticipant("Kri", 4323);
@@ -21,7 +25,7 @@ class Coordinator {
                 coordinator.startParticipant("Kri", 4323);
             }*/
             //coordinator.startCoordinator(4323, 10000);
-            coordinator.startCoordinator(4323,numberOfParticipants);
+            coordinator.startCoordinator(portSelected,numberOfParticipants,timeoutValue,votingOptions, portLogger);
             //coordinator.startCoordinator(4323, timeoutValue);
             //coordinator.sendDetailsParticipants();
 
@@ -43,10 +47,10 @@ class Coordinator {
         }catch(Exception e){System.out.println("error "+e);}
      */
 
-    public void startCoordinator(int port,int numParticipants) throws Exception {
+    public void startCoordinator(int port,int numParticipants,int timeoutValue, ArrayList<String> votingOptions, int portLogger) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
-        ArrayList<String> testing = new ArrayList<>();
-        ArrayList<String> votingOptions = new ArrayList<>();
+        int loggingPortUsed = portLogger;
+
         System.out.println(numParticipants + " are expected to join");
 
         //this.votingOptions = votingOptions; // parameter
@@ -62,10 +66,8 @@ class Coordinator {
             participantArray.add(new ServiceThread(ss.accept()));
 
             if (a == (numParticipants-1)) {
-                ss.setSoTimeout(1000);
-                votingOptions.add("A");
-                votingOptions.add("B");
-                votingOptions.add("C");
+                ss.setSoTimeout(timeoutValue);
+
 
                 System.out.println( numParticipants+ " clients have joined");
 
@@ -80,7 +82,7 @@ class Coordinator {
                     //System.out.println("WOOOHUUUU " + sT.getPort());
                     listOfParticipantPorts.add(sT.getPort());
                     sT.setListOfParticipantPorts(listOfParticipantPorts);
-                    testing = sT.getListOfParticipantPorts();
+                    //testing = sT.getListOfParticipantPorts();
                 }
 
                 //passing the numOfParticipants

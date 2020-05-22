@@ -12,8 +12,10 @@ class Participant{
 
     public static void main(String [] args) throws IOException {
         try {
-            //int portNumber = Integer.parseInt(args[2]);         //port number
-            int portNumber = Integer.parseInt(args[0]);
+            int coordPortNumber = Integer.parseInt(args[0]);                         //port to listen on
+            int portLogger = Integer.parseInt(args[1]);                         //logger port
+            int participantPortNumber = Integer.parseInt(args[2]);         //number of participants
+            int timeoutValue = Integer.parseInt(args[3]);                 //time out value
             Random RNG = new Random();
             Socket socket = new Socket(InetAddress.getLocalHost(), 4323);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
@@ -31,7 +33,7 @@ class Participant{
             //sends join msg
             String line;
             //out.println("JOIN " + socket.getLocalPort());
-            out.println("JOIN " + portNumber);
+            out.println("JOIN " + participantPortNumber);
             out.flush();
             //Thread.sleep(2000);
 
@@ -67,20 +69,20 @@ class Participant{
             //participant is now choosing their vote.
             voteChosen = votingOptions.get(RNG.nextInt(votingOptions.size()));
             System.out.println("I have chosen " +voteChosen);
-            participantVotingInRounds.put(String.valueOf(portNumber),voteChosen);
+            participantVotingInRounds.put(String.valueOf(participantPortNumber),voteChosen);
 
 
             //---------------------------------PARTICIPANT COMMS---------------------------------------------------
             try{
                 //setting up own socket
-                ServerSocket ss = new ServerSocket(portNumber);
+                ServerSocket ss = new ServerSocket(participantPortNumber);
                 for(int b = 0 ; b < otherParticipants.size(); b++) {
                     try {
                         //num of msgs to initiate next round?
                         //failed participants vote is still given
                         //setting up the sockets to other ports
-                        if (!(portNumber == Integer.parseInt(otherParticipants.get(b)))){
-                             participantSenders.add(new ParticipantSender(String.valueOf(portNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen,numOfParticipants));
+                        if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))){
+                             participantSenders.add(new ParticipantSender(String.valueOf(participantPortNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen,numOfParticipants));
                         }
 
                         if (b == otherParticipants.size()-1) {
@@ -91,10 +93,10 @@ class Participant{
 
                             //getting the listeners ready
                             for (int c = 0; c < otherParticipants.size(); c++) {
-                                if (!(portNumber == Integer.parseInt(otherParticipants.get(b)))) {
+                                if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))) {
                                     Socket client = ss.accept();
                                     //ss.setSoTimeout(1000);
-                                    participantReceivers.add(new ParticipantReceiver(client,String.valueOf(portNumber),numOfParticipants));
+                                    participantReceivers.add(new ParticipantReceiver(client,String.valueOf(participantPortNumber),numOfParticipants));
                                 }
                             }
 
@@ -230,16 +232,11 @@ class Participant{
                 //Thread.sleep(100);
             }*/
             //System.out.println("Testing");
-            int f = 0;
-            for(;;){ // stage 2
-                if(participantVotingInRounds.size() == numOfParticipants){
-                    for (String vote : votingOptions){
-                        if (getVoteFrequency(vote,participantVotingInRounds) > a){
+            //int f = 0;
+            /*for(;;){ // stage 2
 
-                        }
-                    }
-                }
-            }
+            }*/
+            System.out.println("The end");
         }catch(Exception e){
             System.out.println("error"+e);
         }
