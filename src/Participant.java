@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
 class Participant{
 
@@ -23,6 +22,7 @@ class Participant{
             ArrayList<ParticipantSender> participantSenders = new ArrayList<>();
             ArrayList<String> otherParticipants = new ArrayList<>();
             ArrayList<String> votingOptions = new ArrayList<>();
+            HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
             String voteChosen;
             //System.out.println("THIS IS MY LOCAL PORT " + socket.getLocalPort());
 
@@ -63,7 +63,8 @@ class Participant{
 
             //participant is now choosing their vote.
             voteChosen = votingOptions.get(RNG.nextInt(votingOptions.size()));
-            System.out.println(voteChosen);
+            System.out.println("I have chosen " +voteChosen);
+            participantVotingInRounds.put(String.valueOf(portNumber),voteChosen);
 
 
             //---------------------------------PARTICIPANT COMMS---------------------------------------------------
@@ -72,10 +73,11 @@ class Participant{
                 ServerSocket ss = new ServerSocket(portNumber);
                 for(int b = 0 ; b < otherParticipants.size(); b++) {
                     try {
-
+                        //num of msgs to initiate next round?
+                        //failed participants vote is still given
                         //setting up the sockets to other ports
                         if (!(portNumber == Integer.parseInt(otherParticipants.get(b)))){
-                             participantSenders.add(new ParticipantSender(String.valueOf(portNumber),Integer.parseInt(otherParticipants.get(b))));
+                             participantSenders.add(new ParticipantSender(String.valueOf(portNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen));
                         }
 
                         if (b == otherParticipants.size()-1) {
@@ -88,6 +90,7 @@ class Participant{
                             for (int c = 0; c < otherParticipants.size(); c++) {
                                 if (!(portNumber == Integer.parseInt(otherParticipants.get(b)))) {
                                     Socket client = ss.accept();
+                                    //ss.setSoTimeout();
                                     participantReceivers.add(new ParticipantReceiver(client,String.valueOf(portNumber)));
                                 }
                             }
@@ -96,6 +99,40 @@ class Participant{
                             for (ParticipantReceiver pR : participantReceivers){
                                 pR.start();
                             }
+
+
+                            //add votes to hashmap.
+                            Thread.sleep(3000);
+                            for (ParticipantReceiver pR : participantReceivers){
+                                System.out.println(pR.getVotingParticipantPort() + " " +pR.getOtherParticipantVote());
+                                participantVotingInRounds.put(pR.getVotingParticipantPort(),pR.getOtherParticipantVote());
+                            }
+
+                            //passing the new updated hashmap
+                            Thread.sleep(3000);
+                            for (ParticipantSender pS : participantSenders){
+                                pS.setParticipantVotingInRounds(participantVotingInRounds);
+                            }
+
+                            //unlock first gate of the senders (2nd round of voting)
+                            Thread.sleep(3000);
+                            for (ParticipantSender pS : participantSenders){
+                                pS.setFirstCheck();
+                            }
+
+                            //unlock first gate of the receivers (2nd round of voting)
+                            Thread.sleep(3000);
+                            for (ParticipantReceiver pR : participantReceivers){
+                                pR.setFirstCheck();
+                            }
+
+                            //printing other participant votes
+                            Thread.sleep(3000);
+                            for (ParticipantReceiver pR : participantReceivers){
+
+                            }
+
+
 
                         }
                     } catch (Exception e) {
@@ -180,6 +217,11 @@ class Participant{
         Socket client;
         String selfPort;
         Random RNG = new Random();
+        String otherParticipantVote;
+        String votingParticipantPort;
+        Boolean firstCheck = true;
+        Boolean secondCheck = true;
+        Boolean thirdCheck = true;
 
         //PrintWriter out;
         //BufferedReader in;
@@ -197,10 +239,50 @@ class Participant{
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line;
 
-                Thread.sleep(12000);
+                //Thread.sleep(12000);
 
+                //testing comms between participant
+                line = in.readLine();
+                System.out.println(line);
+
+                //first round of voting
+                line = in.readLine();
+                System.out.println(line); // find out what others voted for
+                otherParticipantVote = line.split(" ")[2];
+                votingParticipantPort = line.split(" ")[1];
+                setOtherParticipantVote(otherParticipantVote);
+                setVotingParticipantPort(votingParticipantPort);
+                System.out.println(votingParticipantPort+ " " +otherParticipantVote);
+
+
+                //first lock
+                System.out.println("Hit first lock - receiver");
+                while (firstCheck) {
+                    Thread.sleep(2000);
+                    System.out.println("In first lock - receiver");
+                }
+                System.out.println("Exited first lock - receiver");
+
+                //second round of voting -> need to make this recursive so it can rule out any failures
+                line = in.readLine();
+                System.out.println(line);
+
+                while((line = in.readLine()) != null) {
+                    System.out.println(line);
+
+                }
+
+
+                /*
                 while((line = in.readLine()) != null)
-                    System.out.println(line+ " received");
+                    System.out.println(line);
+                */
+
+                /*
+                for (int a = 1; a < line.split(" ").length ; a++){
+                votingOptions.add(line.split(" ")[a]);
+            }
+                 */
 
                 /*
                 System.out.println("IS THIS THREAD RUNNING? -> receiver");
@@ -239,8 +321,40 @@ class Participant{
 
             }
         }
+        public void setFirstCheck() {
+            this.firstCheck = false;
+        }
+        public void setSecondCheck() {
+            this.secondCheck = false;
+        }
+        public void setThirdCheck() {
+            this.thirdCheck = false;
+        }
+
+        public void setOtherParticipantVote(String vote){
+            this.otherParticipantVote = vote;
+        }
+
+        public String getOtherParticipantVote(){
+            return this.otherParticipantVote;
+        }
+
+        public void setVotingParticipantPort(String port){
+            this.votingParticipantPort = port;
+        }
+
+        public String getVotingParticipantPort(){
+            return this.votingParticipantPort;
+        }
+
+        public String getSelfPort(){
+            return this.selfPort;
+        }
+
 
     }
+
+
 
     static class ParticipantSender extends Thread{
             Socket client;
@@ -249,13 +363,20 @@ class Participant{
             Random RNG = new Random();
             Boolean zerothCheck = true;
             Boolean firstCheck = true;
-            //PrintWriter out;
+            Boolean secondCheck = true;
+            Boolean thirdCheck = true;
+            String voteChosen;
+            HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
+
+        //PrintWriter out;
             //BufferedReader in;
 
-            ParticipantSender(String myPort, int otherPort){
+            ParticipantSender(String myPort, int otherPort, String voteChosen){
                 //client=c;
-                this.selfPort = myPort;
+                setSelfPort(myPort);
                 this.otherPort = otherPort;
+                this.voteChosen = voteChosen;
+
             }
 
             //participant to participant comms
@@ -263,19 +384,55 @@ class Participant{
             public void run(){
                 try {
                     Socket client = new Socket(InetAddress.getLocalHost(),otherPort);
-                    setClient(client);
-                    setZerothCheck();
+                    //setClient(client);
+                    //setZerothCheck();
 
                     System.out.println("IS THIS THREAD RUNNING? -> sender");
                     PrintWriter out = new PrintWriter(client.getOutputStream());
                     BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                     String line;
+                    String votePortMsg = "" ;
 
 
                     //testing comms
                     //Thread.sleep(RNG.nextInt(1500)+2000);
                     out.println("COMMUNICATING TO " + client.getPort() + " FROM " + selfPort);
                     //Thread.sleep(5000);
+                    out.flush();
+
+                    //first round
+                    out.println("VOTE " +selfPort + " " +voteChosen);
+                    out.flush();
+
+                    //first lock
+                    System.out.println("Hit first lock - sender");
+                    while (firstCheck) {
+                        Thread.sleep(2000);
+                        System.out.println("In first lock - sender");
+                    }
+                    System.out.println("Exited first lock - sender");
+
+                    //second round of voting
+                    //System.out.println(selfPort);
+                    /*
+                    for(String portWithVote : getParticipantVotingInRounds().keySet()) {
+                        //System.out.println(portWithVote + " " + getParticipantVotingInRounds().get(portWithVote));
+                        if (!(portWithVote == selfPort)) {
+                            votePortMsg = votePortMsg + " " + portWithVote + " " + getParticipantVotingInRounds().get(portWithVote);
+                        }
+                    }*/
+
+                    //borrowed from stack oveflow and modified for use
+                    Iterator<Map.Entry<String,String>> it = getParticipantVotingInRounds().entrySet().iterator();
+                    while(it.hasNext()) {
+                        Map.Entry<String,String> pair = (Map.Entry) it.next();
+                        if (!(selfPort.equals(pair.getKey()))){
+                            votePortMsg = votePortMsg + " " + pair.getKey() + " " + pair.getValue();
+                        }
+                    }
+
+                    //sending the vote round 2
+                    out.println("VOTE" + votePortMsg);
                     out.flush();
 
                     /*
@@ -289,6 +446,15 @@ class Participant{
                     System.out.println(in.readLine());
                     System.out.println("HELLO 3");
                     */
+
+                    //now here comes rounds past 1
+
+                    // -> got to make this recursive so that when no changes occur, it ends.
+                    //while (something) {
+                    // interpret (line) -> make sure nothing is wrong
+                    // if there are differences -> record this in hashmap
+                    // recheck with another round
+                    // if all is cool, then stop looping.
 
 
                     //while((line = in.readLine()) != null)
@@ -311,6 +477,32 @@ class Participant{
              public void setZerothCheck() {
                 this.zerothCheck = false;
             }
+
+            public void setParticipantVotingInRounds(HashMap<String,String> votes){
+                this.participantVotingInRounds = votes;
+            }
+
+            public HashMap<String,String> getParticipantVotingInRounds(){
+                return this.participantVotingInRounds;
+            }
+
+            public void setSelfPort(String selfPort){
+                this.selfPort = selfPort;
+            }
+
+            public String getSelfPort(){
+                return this.selfPort;
+            }
+
+            public void setFirstCheck() {
+            this.firstCheck = false;
+        }
+            public void setSecondCheck() {
+            this.secondCheck = false;
+        }
+            public void setThirdCheck() {
+            this.thirdCheck = false;
+        }
     }
 
     /*
@@ -353,6 +545,7 @@ class Participant{
      */
 }
 //consensus can only be achieved on synchronous systems
+//exchanging of messages until things no longer change.
 /*
 class TCPReceiverThreadedClass{
 
