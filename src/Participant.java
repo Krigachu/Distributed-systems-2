@@ -16,8 +16,10 @@ class Participant{
             int portLogger = Integer.parseInt(args[1]);                         //logger port
             int participantPortNumber = Integer.parseInt(args[2]);         //number of participants
             int timeoutValue = Integer.parseInt(args[3]);                 //time out value
+
             ParticipantLogger.initLogger(portLogger,participantPortNumber,timeoutValue);
             ParticipantLogger pLogger = ParticipantLogger.getLogger();
+
             Random RNG = new Random();
             Socket socket = new Socket(InetAddress.getLocalHost(), coordPortNumber);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
@@ -38,7 +40,7 @@ class Participant{
             //out.println("JOIN " + socket.getLocalPort());
             out.println("JOIN " + participantPortNumber);
             out.flush();
-            //Logging join
+            //Logging join msg
             pLogger.messageSent(coordPortNumber,"JOIN " + participantPortNumber);
             pLogger.joinSent(coordPortNumber);
 
@@ -49,7 +51,7 @@ class Participant{
             numOfParticipants = Integer.parseInt(line.split(" ")[0]);
 
 
-            //reads other participants
+            //reads other participants (details msg)
             line = in.readLine();
             System.out.println(line);
 
@@ -58,10 +60,14 @@ class Participant{
                 otherParticipants.add(line.split(" ")[a]);
             }
 
-            //testing printing other participants
-            /*for (String voteOptionsTesting : otherParticipants){
-                System.out.println(voteOptionsTesting);
-            }*/
+            //converting strings to integers for log message
+            ArrayList<Integer> logParticipantIDs = new ArrayList<>();
+            for (String otherPorts : otherParticipants){
+                logParticipantIDs.add(Integer.parseInt(otherPorts));
+            }
+            //Logging details received msg
+            pLogger.messageReceived(coordPortNumber,line);
+            pLogger.detailsReceived(logParticipantIDs);
 
             //reads voting options
             line = in.readLine();
@@ -71,10 +77,13 @@ class Participant{
             for (int a = 1; a < line.split(" ").length ; a++){
                 votingOptions.add(line.split(" ")[a]);
             }
+            //Logging voting options recieved msg
+            pLogger.messageReceived(coordPortNumber,line);
+            pLogger.voteOptionsReceived(votingOptions);
 
             //participant is now choosing their vote.
             voteChosen = votingOptions.get(RNG.nextInt(votingOptions.size()));
-            System.out.println("I have chosen " +voteChosen);
+            System.out.println("I have chosen " + voteChosen);
             participantVotingInRounds.put(String.valueOf(participantPortNumber),voteChosen);
 
             //add voting options to hashmap which is used for consensus
@@ -83,21 +92,29 @@ class Participant{
             }
 
 
+
             //---------------------------------PARTICIPANT COMMS---------------------------------------------------
             try{
-                //setting up own socket
+                //setting up own server socket for participant to participant comms
                 ServerSocket ss = new ServerSocket(participantPortNumber);
+
+                //Logging startedListening msg
+                pLogger.startedListening();
+
                 for(int b = 0 ; b < otherParticipants.size(); b++) {
                     try {
                         //num of msgs to initiate next round?
                         //failed participants vote is still given
                         //setting up the sockets to other ports
                         if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))){
-                             participantSenders.add(new ParticipantSender(String.valueOf(participantPortNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen,numOfParticipants));
+                             participantSenders.add(new ParticipantSender(String.valueOf(participantPortNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen,numOfParticipants,pLogger));
                         }
 
                         if (b == otherParticipants.size()-1) {
                             //starting the senders
+
+                            //Logging start of round 1
+                            pLogger.beginRound(1);
                             for(ParticipantSender pS : participantSenders){
                                 pS.start();
                             }
@@ -106,10 +123,16 @@ class Participant{
                             for (int c = 0; c < otherParticipants.size(); c++) {
                                 if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))) {
                                     Socket client = ss.accept();
-                                    //ss.setSoTimeout(1000);
-                                    participantReceivers.add(new ParticipantReceiver(client,String.valueOf(participantPortNumber),numOfParticipants));
+
+                                    //Logging connection accepted
+                                    pLogger.connectionAccepted(client.getPort());
+
+                                    //ss.setSoTimeout(timeoutValue);
+                                    participantReceivers.add(new ParticipantReceiver(client,String.valueOf(participantPortNumber),numOfParticipants,pLogger));
                                 }
                             }
+
+
 
                             //starting the listeners
                             for (ParticipantReceiver pR : participantReceivers){
@@ -122,6 +145,8 @@ class Participant{
                                 participantVotingInRounds.put(pR.getVotingParticipantPort(), pR.getOtherParticipantVote());
                             }
 
+
+
                             //passing the new updated hashmap
                             Thread.sleep(2000);
                             for (ParticipantSender pS : participantSenders) {
@@ -133,6 +158,12 @@ class Participant{
                             for (ParticipantReceiver pR : participantReceivers) {
                                 pR.setParticipantVotingInRounds(participantVotingInRounds);
                             }
+
+                            //Logging end of round 1
+                            pLogger.endRound(1);
+
+                            //Logging start of round 2
+                            pLogger.beginRound(2);
 
                             //unlock first gate of the senders (2nd round of voting)
                             Thread.sleep(2000);
@@ -158,6 +189,8 @@ class Participant{
                                 pS.setSecondCheck();
                             }
 
+                            //Logging end of round 2
+                            pLogger.endRound(2);
 
                             /*
                             //if there is an error
@@ -253,6 +286,14 @@ class Participant{
             out.println("OUTCOME " + getMostPopularVote(voteTally) + " "+ participantPortNumber + outcomeMsg);
             out.flush();
 
+            //converting strings to integers for log message
+            logParticipantIDs.add(participantPortNumber);
+
+            //Logging outcome, and outcome msg
+            pLogger.outcomeDecided(getMostPopularVote(voteTally),logParticipantIDs);
+            pLogger.messageSent(coordPortNumber,"OUTCOME " + getMostPopularVote(voteTally) + " "+ participantPortNumber + outcomeMsg);
+            pLogger.outcomeNotified(getMostPopularVote(voteTally),logParticipantIDs);
+
             System.out.println("The end");
         }catch(Exception e){
             System.out.println("error"+e);
@@ -318,13 +359,15 @@ class Participant{
         Boolean failure = true;
         int numOfParticipants;
         HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
+        ParticipantLogger pLogger;
 
         //PrintWriter out;
         //BufferedReader in;
-        ParticipantReceiver(Socket c, String port,int numOfParticipants) {
+        ParticipantReceiver(Socket c, String port,int numOfParticipants,ParticipantLogger pLogger) {
             client = c;
             this.selfPort = port;
             this.numOfParticipants = numOfParticipants;
+            this.pLogger = pLogger;
         }
 
         //participant to participant comms
@@ -349,7 +392,14 @@ class Participant{
                 setOtherParticipantVote(otherParticipantVote);
                 setVotingParticipantPort(votingParticipantPort);
 
+                //creating a vote list for loggers
+                ArrayList<Vote> voteList = new ArrayList<>();
+                voteList.add(new Vote(Integer.parseInt(votingParticipantPort),otherParticipantVote));
 
+                //Logging received votes
+                pLogger.messageReceived(Integer.parseInt(votingParticipantPort),line);
+                pLogger.votesReceived(Integer.parseInt(votingParticipantPort),voteList);
+                voteList.remove(0);
 
                 //first lock
                 System.out.println("Hit first lock - receiver");
@@ -362,6 +412,21 @@ class Participant{
                 //reading second round
                 line = in.readLine();
                 System.out.println(line);
+
+                //updating a vote list for loggers
+                for (String portWithVote : getParticipantVotingInRounds().keySet()){
+                    System.out.println(client.getLocalPort());
+                    System.out.println(client.getPort());
+
+                    if(!(portWithVote.equals(client.getPort()))){ //selfport
+                        voteList.add(new Vote(Integer.parseInt(portWithVote),getParticipantVotingInRounds().get(portWithVote)));
+                    }
+                }
+
+                //Logging received votes
+                pLogger.messageReceived(Integer.parseInt(votingParticipantPort),line);
+                pLogger.votesReceived(Integer.parseInt(votingParticipantPort),voteList);
+
 
                 //second lock
                 System.out.println("Hit second lock - receiver");
@@ -488,16 +553,18 @@ class Participant{
             String voteChosen;
             int numOfParticipants;
             HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
+            ParticipantLogger pLogger;
 
         //PrintWriter out;
             //BufferedReader in;
 
-            ParticipantSender(String myPort, int otherPort, String voteChosen, int numOfParticipants){
+            ParticipantSender(String myPort, int otherPort, String voteChosen, int numOfParticipants,ParticipantLogger pLogger){
                 //client=c;
                 setSelfPort(myPort);
                 this.otherPort = otherPort;
                 this.voteChosen = voteChosen;
                 this.numOfParticipants = numOfParticipants;
+                this.pLogger = pLogger;
             }
 
             //participant to participant comms
@@ -505,6 +572,10 @@ class Participant{
             public void run(){
                 try {
                     Socket client = new Socket(InetAddress.getLocalHost(),otherPort);
+
+                    //Logging connection established
+                    pLogger.connectionEstablished(otherPort);
+
                     //setClient(client);
                     //setZerothCheck();
 
@@ -525,6 +596,15 @@ class Participant{
                     out.println("VOTE " +selfPort + " " +voteChosen);
                     out.flush();
 
+                    //creating a vote list for loggers
+                    ArrayList<Vote> voteList = new ArrayList<>();
+                    voteList.add(new Vote(Integer.parseInt(selfPort),voteChosen));
+
+                    //Logging sent votes
+                    pLogger.messageSent(otherPort,"VOTE " +selfPort + " " +voteChosen);
+                    pLogger.votesSent(otherPort,voteList);
+                    voteList.remove(0);
+
                     //first lock
                     System.out.println("Hit first lock - sender");
                     while (firstCheck) {
@@ -543,6 +623,18 @@ class Participant{
                     //sending the vote round 2
                     out.println("VOTE" + votePortMsg);
                     out.flush();
+
+                    //updating a vote list for loggers
+                    for (String portWithVote : getParticipantVotingInRounds().keySet()){
+                        if(!(portWithVote.equals(selfPort))){
+                            voteList.add(new Vote(Integer.parseInt(portWithVote),getParticipantVotingInRounds().get(portWithVote)));
+                        }
+                    }
+
+                    //Logging sent votes
+                    pLogger.messageSent(otherPort,"VOTE" + votePortMsg);
+                    pLogger.votesSent(otherPort,voteList);
+
 
                     //second lock
                     System.out.println("Hit second lock - sender");
@@ -690,31 +782,3 @@ class Participant{
 }
 //consensus can only be achieved on synchronous systems
 //exchanging of messages until things no longer change.
-/*
-class TCPReceiverThreadedClass{
-
-    public static void main(String [] args){
-        try{
-            ServerSocket ss = new ServerSocket(4322);
-            for(;;){
-                try{Socket client = ss.accept();
-                    new Thread(new ServiceThread(client)).start();
-                }catch(Exception e){System.out.println("error "+e);}
-            }
-        }catch(Exception e){System.out.println("error "+e);}
-    }
-
-    static class ServiceThread implements Runnable{
-        Socket client;
-        ServiceThread(Socket c){client=c;}
-        public void run(){try{
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(client.getInputStream()));
-            String line;
-            while((line = in.readLine()) != null)
-                System.out.println(line+" received");
-            client.close(); }catch(Exception e){}
-        }
-    }
-
-}*/

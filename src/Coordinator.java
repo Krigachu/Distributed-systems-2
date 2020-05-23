@@ -199,7 +199,7 @@ class Coordinator {
                 System.out.println("Exited first lock");
 
                 //sending num of participants
-                out.println(numOfParticipants+" OF PARTICIPANTS");
+                out.println(numOfParticipants+" IS HOW MANY PARTICIPANTS THERE SHOULD BE");
                 out.flush();
 
                 //sending details block
