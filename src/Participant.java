@@ -25,6 +25,7 @@ class Participant{
             ArrayList<String> otherParticipants = new ArrayList<>();
             ArrayList<String> votingOptions = new ArrayList<>();
             HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
+            HashMap<String,Integer> voteTally = new HashMap<>();
             String voteChosen;
             int numOfParticipants;
             Boolean failure = true;
@@ -70,6 +71,11 @@ class Participant{
             voteChosen = votingOptions.get(RNG.nextInt(votingOptions.size()));
             System.out.println("I have chosen " +voteChosen);
             participantVotingInRounds.put(String.valueOf(participantPortNumber),voteChosen);
+
+            //add voting options to hashmap which is used for consensus
+            for (String vote : votingOptions){
+                voteTally.put(vote,0);
+            }
 
 
             //---------------------------------PARTICIPANT COMMS---------------------------------------------------
@@ -221,21 +227,27 @@ class Participant{
 
             //------------------------------------------------------------------------------------
 
-            /*for (int i = 0; i < 5; i++) { // stage 1
-                //out.println("TCP message " + i + " from sender " + socket.getLocalPort());
-                out.println("TCP message " + i + " from sender 1");
-                out.flush();                                               //required to send messages to receiver, flush = push stream into socket
-                System.out.println("TCP message " + i + " sent");
-                //Thread.sleep(1000);
-                line = in.readLine();
-                System.out.println(line + " received");
-                //Thread.sleep(100);
-            }*/
             //System.out.println("Testing");
             //int f = 0;
-            /*for(;;){ // stage 2
 
-            }*/
+            //decide outcome here
+            Thread.sleep(20000);
+            for(String vote : voteTally.keySet()){
+                voteTally.replace(vote,getVoteFrequency(vote,participantVotingInRounds));
+            }
+
+            Thread.sleep(1000);
+            //getMostPopularVote(voteTally);
+            //System.out.println("MOST POPULAR CHOICE "+getMostPopularVote(voteTally));
+
+            String outcomeMsg = "";
+            for(String ports : otherParticipants){
+                outcomeMsg = outcomeMsg + " " + ports;
+            }
+
+            out.println("OUTCOME " + getMostPopularVote(voteTally) + " "+ participantPortNumber + outcomeMsg);
+            out.flush();
+
             System.out.println("The end");
         }catch(Exception e){
             System.out.println("error"+e);
@@ -271,6 +283,23 @@ class Participant{
         }
         return a;
     }
+
+    public static String getMostPopularVote(HashMap<String,Integer> voteTally){
+        int a = -1;
+        String highestCurrentVote = "Z";
+        for(String vote : voteTally.keySet()){
+            if (voteTally.get(vote) > a ){
+                a = voteTally.get(vote);
+                highestCurrentVote = vote;
+            }else if(voteTally.get(vote) == a){
+                if(Character.getNumericValue(highestCurrentVote.charAt(0)) > Character.getNumericValue(vote.charAt(0))){
+                    highestCurrentVote = vote;
+                }
+            }
+        }
+        return  highestCurrentVote;
+    }
+
 
     static class ParticipantReceiver extends Thread {
         Socket client;

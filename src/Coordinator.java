@@ -12,10 +12,12 @@ class Coordinator {
             int portLogger = Integer.parseInt(args[1]);                         //logger port
             int numberOfParticipants = Integer.parseInt(args[2]);         //number of participants
             int timeoutValue = Integer.parseInt(args[3]);                 //time out value
-            ArrayList<String> votingOptions = new ArrayList<>();
-            for (int a = 4 ;a < args.length ; a++){
-                votingOptions.add(args[a]);
+            ArrayList<Character> votingOptions = new ArrayList<>();
 
+
+            for (int a = 4 ;a < args.length ; a++){
+                votingOptions.add(args[a].charAt(0));
+                //System.out.println(Character.getNumericValue(args[a].charAt(0)));
             }
 
             Coordinator coordinator = new Coordinator();
@@ -33,6 +35,7 @@ class Coordinator {
             //numberOfParticipants
         } catch (Exception e) {
 
+
         }
     }
 
@@ -47,7 +50,7 @@ class Coordinator {
         }catch(Exception e){System.out.println("error "+e);}
      */
 
-    public void startCoordinator(int port,int numParticipants,int timeoutValue, ArrayList<String> votingOptions, int portLogger) throws Exception {
+    public void startCoordinator(int port,int numParticipants,int timeoutValue, ArrayList<Character> votingOptions, int portLogger) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
         int loggingPortUsed = portLogger;
 
@@ -133,30 +136,7 @@ class Coordinator {
         }
 
     }
-/*
-    public void startCoordinator(int port, int timeout) throws IOException {
-        ss = new ServerSocket(port);
-        ss.setSoTimeout(timeout);
 
-        while (true) {
-            new ServiceThread(ss.accept()).start();
-        }
-        /*int a = 0;
-        while(a < 3) {   //should be max number of participants
-
-            new ServiceThread(ss.accept()).start();
-            //ServiceThread test = new ServiceThread(ss.accept());
-
-            if (a == 2){
-                System.out.println("3 clients have joined");
-
-            }
-
-            a++;
-        }
-
-    }
-    */
 
     //participant crashing throws tcp and time out
 //details contains list of ports -> partcipant
@@ -189,7 +169,7 @@ class Coordinator {
         Boolean secondCheck = true;
         Boolean thirdCheck = true;
         private volatile ArrayList<String> listOfParticipantPorts = new ArrayList<>();
-        private volatile ArrayList<String> votingOptions = new ArrayList<>();
+        private volatile ArrayList<Character> votingOptions = new ArrayList<>();
 
         public ServiceThread(Socket c) {
             client = c;
@@ -241,7 +221,7 @@ class Coordinator {
                 System.out.println("Exited second lock");
 
                 //sending vote options
-                for (String voteOption : getVotingOptions()) {
+                for (Character voteOption : getVotingOptions()) {
                     votingOptionsMsg = votingOptionsMsg + " " + voteOption;
                 }
 
@@ -259,12 +239,8 @@ class Coordinator {
 
 
                 while ((line = in.readLine()) != null) {
-                    System.out.println(line + " received");
-                    //System.out.println(line);
-                    System.out.println("Sending ack");
-                    out.println("THIS IS AN ACK");
-                    out.flush();
-                    Thread.sleep(3000);
+                    System.out.println(line);
+
                 }
 
 
@@ -320,11 +296,11 @@ class Coordinator {
             this.thirdCheck = false;
         }
 
-            public void setVotingOptions(ArrayList<String> votingOptions){
+            public void setVotingOptions(ArrayList<Character> votingOptions){
                 this.votingOptions = votingOptions;
             }
 
-            public ArrayList<String> getVotingOptions(){
+            public ArrayList<Character> getVotingOptions(){
                 return this.votingOptions;
             }
             public void setNum(int numOfParticipants){
