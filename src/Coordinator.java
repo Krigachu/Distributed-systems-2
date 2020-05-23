@@ -13,6 +13,8 @@ class Coordinator {
             int numberOfParticipants = Integer.parseInt(args[2]);         //number of participants
             int timeoutValue = Integer.parseInt(args[3]);                 //time out value
             ArrayList<Character> votingOptions = new ArrayList<>();
+            CoordinatorLogger.initLogger(portLogger,portSelected,timeoutValue);
+            CoordinatorLogger cLogger = CoordinatorLogger.getLogger();
 
 
             for (int a = 4 ;a < args.length ; a++){
@@ -27,7 +29,7 @@ class Coordinator {
                 coordinator.startParticipant("Kri", 4323);
             }*/
             //coordinator.startCoordinator(4323, 10000);
-            coordinator.startCoordinator(portSelected,numberOfParticipants,timeoutValue,votingOptions, portLogger);
+            coordinator.startCoordinator(portSelected,numberOfParticipants,timeoutValue,votingOptions, portLogger,cLogger);
             //coordinator.startCoordinator(4323, timeoutValue);
             //coordinator.sendDetailsParticipants();
 
@@ -50,9 +52,10 @@ class Coordinator {
         }catch(Exception e){System.out.println("error "+e);}
      */
 
-    public void startCoordinator(int port,int numParticipants,int timeoutValue, ArrayList<Character> votingOptions, int portLogger) throws Exception {
+    public void startCoordinator(int port,int numParticipants,int timeoutValue, ArrayList<Character> votingOptions, int portLogger,CoordinatorLogger cLogger) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
         int loggingPortUsed = portLogger;
+
 
         System.out.println(numParticipants + " are expected to join");
 
@@ -66,7 +69,15 @@ class Coordinator {
         int a = 0;
         while (a < numParticipants) {   //should be max number of participants
             //new ServiceThread(ss.accept()).start();
-            participantArray.add(new ServiceThread(ss.accept()));
+
+            //Logging started listening
+            cLogger.startedListening(port);
+
+            Socket client = ss.accept();
+            participantArray.add(new ServiceThread(client,cLogger));
+
+            //Logging connection accepted
+            cLogger.connectionAccepted(client.getPort());
 
             if (a == (numParticipants-1)) {
                 ss.setSoTimeout(timeoutValue);
@@ -78,6 +89,7 @@ class Coordinator {
                 for (ServiceThread sT : participantArray) {
                     sT.start();
                 }
+
 
                 //getting ports of each participant
                 Thread.sleep(2000);
@@ -170,9 +182,11 @@ class Coordinator {
         Boolean thirdCheck = true;
         private volatile ArrayList<String> listOfParticipantPorts = new ArrayList<>();
         private volatile ArrayList<Character> votingOptions = new ArrayList<>();
+        CoordinatorLogger cLogger;
 
-        public ServiceThread(Socket c) {
+        public ServiceThread(Socket c, CoordinatorLogger cLogger) {
             client = c;
+            this.cLogger = cLogger;
         }
 
         // locks are good
@@ -183,12 +197,14 @@ class Coordinator {
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line;
 
+                //receives join msg
                 line = in.readLine();
                 setPort(line.split(" ")[1]);
                 System.out.println(line);
 
-                //Thread.sleep(10000);
-                //System.out.println(getPort());
+                //Logging join msg
+                cLogger.messageReceived(Integer.parseInt(getPort()),line);
+                cLogger.joinReceived(Integer.parseInt(getPort()));
 
                 //first lock
                 System.out.println("Hit first lock");
@@ -212,6 +228,18 @@ class Coordinator {
                 out.println("DETAILS" + detailsMsg);
                 out.flush();
 
+                //converts strings to integers for logger
+                ArrayList<Integer> participantList = new ArrayList<>();
+                for (String ports : getListOfParticipantPorts()){
+                    if(!(getPort().equals(ports))){
+                        participantList.add(Integer.parseInt(ports));
+                    }
+                }
+
+                //Logging details sent
+                cLogger.messageSent(Integer.parseInt(getPort()),"DETAILS" + detailsMsg);
+                cLogger.detailsSent(Integer.parseInt(getPort()),participantList);
+
                 //second lock
                 System.out.println("Hit second lock");
                 while (secondCheck) {
@@ -228,6 +256,17 @@ class Coordinator {
                 out.println("VOTING_OPTIONS" + votingOptionsMsg);
                 out.flush();
 
+                //converts characters to strings for logger
+                ArrayList<String> votingOptionsList = new ArrayList<>();
+                for (Character votes : getVotingOptions()){
+                    votingOptionsList.add(String.valueOf(votes));
+                }
+
+                //Logging voting options sent
+                cLogger.messageSent(Integer.parseInt(port),"VOTING_OPTIONS" + votingOptionsMsg);
+                cLogger.voteOptionsSent(Integer.parseInt(getPort()), votingOptionsList);
+
+
                 //third lock
                 /*System.out.println("Hit third lock");
                 while (thirdCheck) {
@@ -236,12 +275,20 @@ class Coordinator {
                 }
                 System.out.println("Exited third lock");*/
 
+                //Reads outcome msg
+                Thread.sleep(25000);
+                line = in.readLine();
+                System.out.println(line);
 
+                //Logging outcome msg received
+                cLogger.messageReceived(Integer.parseInt(getPort()),line);
+                cLogger.outcomeReceived(Integer.parseInt(getPort()),line.split(" ")[1]);
 
+                /*
                 while ((line = in.readLine()) != null) {
                     System.out.println(line);
 
-                }
+                }*/
 
 
                 /*for(int a = 0; a<5 ;a++){
