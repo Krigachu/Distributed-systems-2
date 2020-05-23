@@ -16,8 +16,10 @@ class Participant{
             int portLogger = Integer.parseInt(args[1]);                         //logger port
             int participantPortNumber = Integer.parseInt(args[2]);         //number of participants
             int timeoutValue = Integer.parseInt(args[3]);                 //time out value
+            ParticipantLogger.initLogger(portLogger,participantPortNumber,timeoutValue);
+            ParticipantLogger pLogger = ParticipantLogger.getLogger();
             Random RNG = new Random();
-            Socket socket = new Socket(InetAddress.getLocalHost(), 4323);
+            Socket socket = new Socket(InetAddress.getLocalHost(), coordPortNumber);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             ArrayList<ParticipantReceiver> participantReceivers = new ArrayList<>();
@@ -36,7 +38,10 @@ class Participant{
             //out.println("JOIN " + socket.getLocalPort());
             out.println("JOIN " + participantPortNumber);
             out.flush();
-            //Thread.sleep(2000);
+            //Logging join
+            pLogger.messageSent(coordPortNumber,"JOIN " + participantPortNumber);
+            pLogger.joinSent(coordPortNumber);
+
 
             //numOfParticipants
             line=in.readLine();
