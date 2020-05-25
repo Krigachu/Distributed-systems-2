@@ -279,6 +279,7 @@ class Coordinator {
                 }
                 System.out.println("Exited third lock");*/
 
+
                 //Reads outcome msg
                 //Thread.sleep(25000);
                 line = in.readLine();
@@ -329,6 +330,10 @@ class Coordinator {
 
             public String getPort() {
                 return this.port;
+            }
+
+            public Boolean getProcessFailed() {
+                return this.processFailed;
             }
 
             public void setListOfParticipantPorts (ArrayList < String > listOfParticipantPorts) {

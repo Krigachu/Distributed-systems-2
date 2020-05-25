@@ -107,12 +107,6 @@ class Participant{
                 voteTally.put(vote,0);
             }
 
-            /*
-            synchronized (lock){
-                lock.wait();
-            }*/
-
-            //check here if any participants have failed
 
             //---------------------------------PARTICIPANT COMMS---------------------------------------------------
             try{
@@ -125,7 +119,6 @@ class Participant{
                 for(int b = 0 ; b < otherParticipants.size(); b++) {
                     try {
                         //num of msgs to initiate next round?
-                        //failed participants vote is still given
                         //setting up the sockets to other ports
                         if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))){
                             participantSenders.add(new ParticipantSender(String.valueOf(participantPortNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen,numOfParticipants,pLogger));
@@ -142,15 +135,21 @@ class Participant{
 
                             //getting the listeners ready
                             for (int c = 0; c < otherParticipants.size(); c++) {
-                                if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))) {
-                                    ss.setSoTimeout(timeoutValue);
-                                    Socket client = ss.accept();
+                                try {
+                                    if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(c)))) { //was b instead of c
+                                        ss.setSoTimeout(timeoutValue);
+                                        Socket client = ss.accept();
 
-                                    //Logging connection accepted
-                                    pLogger.connectionAccepted(client.getPort());
+                                        //Logging connection accepted
+                                        pLogger.connectionAccepted(client.getPort());
 
 
-                                    participantReceivers.add(new ParticipantReceiver(client,String.valueOf(participantPortNumber),numOfParticipants,pLogger));
+                                        participantReceivers.add(new ParticipantReceiver(client, String.valueOf(participantPortNumber), numOfParticipants, pLogger));
+                                    }
+                                }catch (Exception e){
+                                    System.out.println("Participant "+otherParticipants.get(c)+ " has crashed");
+                                    pLogger.participantCrashed(Integer.parseInt(otherParticipants.get(c)));
+                                    //e.printStackTrace();
                                 }
                             }
 
@@ -277,7 +276,7 @@ class Participant{
 
                         }
                     } catch (Exception e) {
-
+                        e.printStackTrace();
                     }
                 }
 
@@ -493,23 +492,6 @@ class Participant{
 
                 System.out.println("YAAS, IT WORKS - receiver");
 
-
-
-
-
-                /*
-                while((line = in.readLine()) != null)
-                    System.out.println(line);
-                */
-
-                /*
-                for (int a = 1; a < line.split(" ").length ; a++){
-                votingOptions.add(line.split(" ")[a]);
-            }
-                 */
-
-
-
                 client.close();
                 System.out.println("CLOSED - receiver");
             } catch (Exception e) {
@@ -714,12 +696,10 @@ class Participant{
                     // if all is cool, then stop looping.
 
 
-                    //while((line = in.readLine()) != null)
-
-
                     client.close();
                     System.out.println("CLOSED - SENDER");
                 }catch(Exception e){
+
 
                 }
             }
