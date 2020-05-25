@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 class Participant{
 
@@ -47,6 +48,7 @@ class Participant{
             String voteChosen;
             int numOfParticipants;
             Boolean failure = true;
+            Object lock = new Object();
             //System.out.println("THIS IS MY LOCAL PORT " + socket.getLocalPort());
 
             //sends join msg
@@ -105,7 +107,12 @@ class Participant{
                 voteTally.put(vote,0);
             }
 
+            /*
+            synchronized (lock){
+                lock.wait();
+            }*/
 
+            //check here if any participants have failed
 
             //---------------------------------PARTICIPANT COMMS---------------------------------------------------
             try{
@@ -136,12 +143,13 @@ class Participant{
                             //getting the listeners ready
                             for (int c = 0; c < otherParticipants.size(); c++) {
                                 if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))) {
+                                    ss.setSoTimeout(timeoutValue);
                                     Socket client = ss.accept();
 
                                     //Logging connection accepted
                                     pLogger.connectionAccepted(client.getPort());
 
-                                    //ss.setSoTimeout(timeoutValue);
+
                                     participantReceivers.add(new ParticipantReceiver(client,String.valueOf(participantPortNumber),numOfParticipants,pLogger));
                                 }
                             }
@@ -283,7 +291,7 @@ class Participant{
             //int f = 0;
 
             //decide outcome here
-            Thread.sleep(20000);
+            //Thread.sleep(20000);
             for(String vote : voteTally.keySet()){
                 voteTally.replace(vote,getVoteFrequency(vote,participantVotingInRounds));
             }
@@ -431,10 +439,11 @@ class Participant{
 
                 //updating a vote list for loggers
                 for (String portWithVote : getParticipantVotingInRounds().keySet()){
-                    System.out.println(client.getLocalPort());
-                    System.out.println(client.getPort());
+                    System.out.println(votingParticipantPort);
+                    //System.out.println(client.getPort());
 
-                    if(!(portWithVote.equals(client.getPort()))){ //selfport
+                    if(!(portWithVote.equals(votingParticipantPort))){
+                        System.out.println(portWithVote+ " IS NOT EQUAL TO " + votingParticipantPort);
                         voteList.add(new Vote(Integer.parseInt(portWithVote),getParticipantVotingInRounds().get(portWithVote)));
                     }
                 }
@@ -504,6 +513,8 @@ class Participant{
                 client.close();
                 System.out.println("CLOSED - receiver");
             } catch (Exception e) {
+                System.out.println(getVotingParticipantPort()+ " has crashed - receiver");
+                pLogger.participantCrashed(Integer.parseInt(votingParticipantPort));
 
             }
         }

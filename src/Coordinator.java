@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.concurrent.TimeoutException;
 
 class Coordinator {
     private ServerSocket ss;
@@ -55,6 +56,7 @@ class Coordinator {
     public void startCoordinator(int port,int numParticipants,int timeoutValue, ArrayList<Character> votingOptions, int portLogger,CoordinatorLogger cLogger) throws Exception {
         ArrayList<ServiceThread> participantArray = new ArrayList<>();
         int loggingPortUsed = portLogger;
+        Object lock = new Object();
 
 
         System.out.println(numParticipants + " are expected to join");
@@ -74,7 +76,7 @@ class Coordinator {
             cLogger.startedListening(port);
 
             Socket client = ss.accept();
-            participantArray.add(new ServiceThread(client,cLogger));
+            participantArray.add(new ServiceThread(client,cLogger,lock));
 
             //Logging connection accepted
             cLogger.connectionAccepted(client.getPort());
@@ -105,12 +107,7 @@ class Coordinator {
                     sT.setNum(numParticipants);
                 }
 
-                //testing whether setting something works
-                /*Thread.sleep(3000);
-                for (ServiceThread sT : participantArray) {
-                    sT.setPort("69420");
-                    System.out.println("has it changed port numbers");
-                }*/
+
 
                 //setting first check
                 Thread.sleep(2000);
@@ -180,13 +177,17 @@ class Coordinator {
         Boolean firstCheck = true;
         Boolean secondCheck = true;
         Boolean thirdCheck = true;
-        private volatile ArrayList<String> listOfParticipantPorts = new ArrayList<>();
-        private volatile ArrayList<Character> votingOptions = new ArrayList<>();
+        ArrayList<String> listOfParticipantPorts = new ArrayList<>();
+        ArrayList<Character> votingOptions = new ArrayList<>();
         CoordinatorLogger cLogger;
+        Object lock;
+        Boolean processFailed = false;
 
-        public ServiceThread(Socket c, CoordinatorLogger cLogger) {
+
+        public ServiceThread(Socket c, CoordinatorLogger cLogger,Object lock) {
             client = c;
             this.cLogger = cLogger;
+            this.lock = lock;
         }
 
         // locks are good
@@ -202,9 +203,11 @@ class Coordinator {
                 setPort(line.split(" ")[1]);
                 System.out.println(line);
 
+
                 //Logging join msg
                 cLogger.messageReceived(Integer.parseInt(getPort()),line);
                 cLogger.joinReceived(Integer.parseInt(getPort()));
+
 
                 //first lock
                 System.out.println("Hit first lock");
@@ -213,6 +216,7 @@ class Coordinator {
                     System.out.println("In first lock");
                 }
                 System.out.println("Exited first lock");
+
 
                 //sending num of participants
                 out.println(numOfParticipants+" IS HOW MANY PARTICIPANTS THERE SHOULD BE");
@@ -276,7 +280,7 @@ class Coordinator {
                 System.out.println("Exited third lock");*/
 
                 //Reads outcome msg
-                Thread.sleep(25000);
+                //Thread.sleep(25000);
                 line = in.readLine();
                 System.out.println(line);
 
@@ -305,7 +309,9 @@ class Coordinator {
 
                     client.close();
                 }catch(Exception e){
-
+                    System.out.println( getPort() + " has crashed");
+                    cLogger.participantCrashed(Integer.parseInt(getPort()));
+                    processFailed = true;
                 }
             }
 
