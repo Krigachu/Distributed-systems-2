@@ -17,9 +17,23 @@ class Participant{
             int participantPortNumber = Integer.parseInt(args[2]);         //number of participants
             int timeoutValue = Integer.parseInt(args[3]);                 //time out value
 
-            ParticipantLogger.initLogger(portLogger,participantPortNumber,timeoutValue);
+            ParticipantLogger.initLogger(portLogger, participantPortNumber, timeoutValue);
             ParticipantLogger pLogger = ParticipantLogger.getLogger();
 
+            Participant participant = new Participant();
+            participant.startParticipant(coordPortNumber,portLogger,participantPortNumber,timeoutValue,pLogger);
+        } catch (Exception e) {
+
+        }
+    }
+
+    public void startParticipant(int coordPort, int lPort, int participantPort, int timeout, ParticipantLogger pLog) throws Exception{
+        int coordPortNumber = coordPort;                        //port to listen on
+        int portLogger = lPort;                         //logger port
+        int participantPortNumber = participantPort;         //number of participants
+        int timeoutValue = timeout;                 //time out value
+        ParticipantLogger pLogger = pLog;
+        try{
             Random RNG = new Random();
             Socket socket = new Socket(InetAddress.getLocalHost(), coordPortNumber);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
@@ -107,7 +121,7 @@ class Participant{
                         //failed participants vote is still given
                         //setting up the sockets to other ports
                         if (!(participantPortNumber == Integer.parseInt(otherParticipants.get(b)))){
-                             participantSenders.add(new ParticipantSender(String.valueOf(participantPortNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen,numOfParticipants,pLogger));
+                            participantSenders.add(new ParticipantSender(String.valueOf(participantPortNumber),Integer.parseInt(otherParticipants.get(b)),voteChosen,numOfParticipants,pLogger));
                         }
 
                         if (b == otherParticipants.size()-1) {
@@ -299,6 +313,8 @@ class Participant{
             System.out.println("error"+e);
         }
     }
+
+
 
     public static int getLargestPortNumber(ArrayList<String> otherParticipants){
         int a = 0;
