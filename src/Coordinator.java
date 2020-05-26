@@ -94,7 +94,7 @@ class Coordinator {
 
 
                 //getting ports of each participant
-                Thread.sleep(2000);
+                Thread.sleep(500);
                 for (ServiceThread sT : participantArray) {
                     //System.out.println("WOOOHUUUU " + sT.getPort());
                     listOfParticipantPorts.add(sT.getPort());
@@ -110,21 +110,21 @@ class Coordinator {
 
 
                 //setting first check
-                Thread.sleep(2000);
+                Thread.sleep(500);
                 for (ServiceThread sT : participantArray) {
                     sT.setFirstCheck();
                     System.out.println("Unlocking first gate");
                 }
 
                 //providing voting options for participants
-                Thread.sleep(2000);
+                Thread.sleep(500);
                 for (ServiceThread sT : participantArray){
                     sT.setVotingOptions(votingOptions);
                     System.out.println("Setting voting options");
                 }
 
                 //setting second check
-                Thread.sleep(2000);
+                Thread.sleep(500);
                 for (ServiceThread sT : participantArray) {
                     sT.setSecondCheck();
                     System.out.println("Unlocking second gate");
@@ -212,8 +212,8 @@ class Coordinator {
                 //first lock
                 System.out.println("Hit first lock");
                 while (firstCheck) {
-                    Thread.sleep(2000);
-                    System.out.println("In first lock");
+                    Thread.sleep(500);
+                    //System.out.println("In first lock");
                 }
                 System.out.println("Exited first lock");
 
@@ -247,8 +247,8 @@ class Coordinator {
                 //second lock
                 System.out.println("Hit second lock");
                 while (secondCheck) {
-                    Thread.sleep(2000);
-                    System.out.println("In second lock");
+                    Thread.sleep(500);
+                    //System.out.println("In second lock");
                 }
                 System.out.println("Exited second lock");
 

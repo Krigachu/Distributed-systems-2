@@ -166,7 +166,7 @@ class Participant{
                             }
 
                             //putting info into hashmap (receiving from first send)
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantReceiver pR : participantReceivers) {
                                 tempHashMap.put(pR.getVotingParticipantPort(), pR.getOtherParticipantVote());
                             }
@@ -188,13 +188,13 @@ class Participant{
 
 
                             //passing the new updated hashmap
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantSender pS : participantSenders) {
                                 pS.setParticipantVotingInRounds(participantVotingInRounds);
                             }
 
                             //passing the new updated hashmap
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantReceiver pR : participantReceivers) {
                                 pR.setParticipantVotingInRounds(participantVotingInRounds);
                             }
@@ -207,7 +207,7 @@ class Participant{
                             pLogger.beginRound(2);
 
                             //unlock first gate of the senders (2nd round of voting)
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantSender pS : participantSenders) {
                                 pS.setFirstCheck();
                             }
@@ -215,7 +215,7 @@ class Participant{
                             //sender stuff happens here
 
                             //unlock first gate of the receivers (2nd round of voting) -2nd wave of info received but shouldn't be different from known
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantReceiver pR : participantReceivers) {
                                 pR.setFirstCheck();
                             }
@@ -223,7 +223,7 @@ class Participant{
                             //new info sent here
 
                             //trying to update temp hashmap
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantReceiver pR : participantReceivers){
                                 tempHashMap.putAll(pR.getTempHashMap());
                             }
@@ -248,25 +248,25 @@ class Participant{
                             }
 
                             //passing the new updated hashmap (actual)
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantSender pS : participantSenders) {
                                 pS.setParticipantVotingInRounds(participantVotingInRounds);
                             }
 
                             //passing the new updated hashmap (actual)
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantReceiver pR : participantReceivers) {
                                 pR.setParticipantVotingInRounds(participantVotingInRounds);
                             }
 
                             //unlock second gate of the senders (2nd round of voting)
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantSender pS : participantSenders) {
                                 pS.setSecondCheck();
                             }
 
                             //unlock second gate of the receivers (2nd round of voting)
-                            Thread.sleep(2000);
+                            Thread.sleep(500);
                             for (ParticipantReceiver pR : participantReceivers) {
                                 pR.setSecondCheck();
                             }
@@ -345,7 +345,7 @@ class Participant{
 
 
 
-                            Thread.sleep(3000);
+                            Thread.sleep(500);
                             for (ParticipantReceiver pR : participantReceivers){
                                 System.out.println("WE OUTTIE");
                             }
@@ -517,8 +517,8 @@ class Participant{
                 //first lock
                 System.out.println("Hit first lock - receiver");
                 while (firstCheck) {
-                    Thread.sleep(2000);
-                    System.out.println("In first lock - receiver");
+                    Thread.sleep(500);
+                    //System.out.println("In first lock - receiver");
                 }
                 System.out.println("Exited first lock - receiver");
 
@@ -547,8 +547,8 @@ class Participant{
                 //second lock
                 System.out.println("Hit second lock - receiver");
                 while (secondCheck) {
-                    Thread.sleep(2000);
-                    System.out.println("In second lock - receiver");
+                    Thread.sleep(500);
+                    //System.out.println("In second lock - receiver");
                 }
                 System.out.println("Exited second lock - receiver");
 
@@ -712,8 +712,8 @@ class Participant{
                     //first lock
                     System.out.println("Hit first lock - sender");
                     while (firstCheck) {
-                        Thread.sleep(2000);
-                        System.out.println("In first lock - sender");
+                        Thread.sleep(500);
+                        //System.out.println("In first lock - sender");
                     }
                     System.out.println("Exited first lock - sender");
 
@@ -745,8 +745,8 @@ class Participant{
                     //second lock
                     System.out.println("Hit second lock - sender");
                     while (secondCheck) {
-                        Thread.sleep(2000);
-                        System.out.println("In second lock - sender");
+                        Thread.sleep(500);
+                        //System.out.println("In second lock - sender");
                     }
                     System.out.println("Exited second lock - sender");
                     votePortMsg = "";
