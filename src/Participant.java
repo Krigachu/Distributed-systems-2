@@ -147,8 +147,8 @@ class Participant{
                                         participantReceivers.add(new ParticipantReceiver(client, String.valueOf(participantPortNumber), numOfParticipants, pLogger));
                                     }
                                 }catch (Exception e){
-                                    System.out.println("Participant "+otherParticipants.get(c)+ " has crashed");
-                                    pLogger.participantCrashed(Integer.parseInt(otherParticipants.get(c)));
+                                    //System.out.println("Participant "+otherParticipants.get(c)+ " has crashed");
+                                    //pLogger.participantCrashed(Integer.parseInt(otherParticipants.get(c)));
                                     //e.printStackTrace();
                                 }
                             }
@@ -272,6 +272,12 @@ class Participant{
                                 System.out.println("WE OUTTIE");
                             }
 
+                            //removing participants who did not vote
+                            for (ParticipantSender pS : participantSenders){
+                                if (pS.getHasFailed()){
+                                    otherParticipants.remove(String.valueOf(pS.getOtherPort()));
+                                }
+                            }
 
 
                         }
@@ -438,11 +444,11 @@ class Participant{
 
                 //updating a vote list for loggers
                 for (String portWithVote : getParticipantVotingInRounds().keySet()){
-                    System.out.println(votingParticipantPort);
+                    //System.out.println(votingParticipantPort);
                     //System.out.println(client.getPort());
 
                     if(!(portWithVote.equals(votingParticipantPort))){
-                        System.out.println(portWithVote+ " IS NOT EQUAL TO " + votingParticipantPort);
+                        //System.out.println(portWithVote+ " IS NOT EQUAL TO " + votingParticipantPort);
                         voteList.add(new Vote(Integer.parseInt(portWithVote),getParticipantVotingInRounds().get(portWithVote)));
                     }
                 }
@@ -495,8 +501,8 @@ class Participant{
                 client.close();
                 System.out.println("CLOSED - receiver");
             } catch (Exception e) {
-                System.out.println(getVotingParticipantPort()+ " has crashed - receiver");
-                pLogger.participantCrashed(Integer.parseInt(votingParticipantPort));
+                //System.out.println(getVotingParticipantPort()+ " has crashed - receiver");
+                //pLogger.participantCrashed(Integer.parseInt(votingParticipantPort));
 
             }
         }
@@ -558,7 +564,7 @@ class Participant{
             Boolean firstCheck = true;
             Boolean secondCheck = true;
             Boolean thirdCheck = true;
-            Boolean failure = true;
+            Boolean hasFailed = false;
             String voteChosen;
             int numOfParticipants;
             HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
@@ -686,7 +692,7 @@ class Participant{
                         }*/
 
                     System.out.println("YAAS, IT WORKS - sender");
-                    //now here comes rounds past 1
+
 
                     // -> got to make this recursive so that when no changes occur, it ends.
                     //while (something) {
@@ -699,7 +705,9 @@ class Participant{
                     client.close();
                     System.out.println("CLOSED - SENDER");
                 }catch(Exception e){
-
+                    System.out.println(otherPort+ " has crashed - sender");
+                    pLogger.participantCrashed(otherPort);
+                    hasFailed = true;
 
                 }
             }
@@ -746,6 +754,14 @@ class Participant{
             public void setThirdCheck(Boolean var) {
             this.thirdCheck = var;
         }
+
+            public Boolean getHasFailed(){
+                return this.hasFailed;
+            }
+
+            public int getOtherPort(){
+                return this.otherPort;
+            }
     }
 
     /*
