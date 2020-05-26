@@ -146,17 +146,6 @@ class Coordinator {
 
     }
 
-
-    //participant crashing throws tcp and time out
-//details contains list of ports -> partcipant
-
-    public void startParticipant(String host, int portSelected) throws IOException {
-        Participant2 participant = new Participant2();
-        participant.start();
-        //participant.startConnection(host,portSelected);
-
-    }
-
     //should send details i.e what participants are currently in consensus excluding yourself.
     public void sendDetailsParticipants() {
         for (String portName : listOfParticipantPorts) {
