@@ -39,15 +39,19 @@ class Participant{
             Socket socket = new Socket(InetAddress.getLocalHost(), coordPortNumber);
             PrintWriter out = new PrintWriter(socket.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
             ArrayList<ParticipantReceiver> participantReceivers = new ArrayList<>();
             ArrayList<ParticipantSender> participantSenders = new ArrayList<>();
             ArrayList<String> otherParticipants = new ArrayList<>();
             ArrayList<String> votingOptions = new ArrayList<>();
             HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
+            HashMap<String,String> tempHashMap = new HashMap<>();  //temp buffer for actual hashmap
             HashMap<String,Integer> voteTally = new HashMap<>();
+
             String voteChosen;
             int numOfParticipants;
             Boolean failure = true;
+            Boolean secondRoundSame = false;
             Object lock = new Object();
             //System.out.println("THIS IS MY LOCAL PORT " + socket.getLocalPort());
 
@@ -84,6 +88,7 @@ class Participant{
             //Logging details received msg
             pLogger.messageReceived(coordPortNumber,line);
             pLogger.detailsReceived(logParticipantIDs);
+            logParticipantIDs.clear();
 
             //reads voting options
             line = in.readLine();
@@ -163,9 +168,13 @@ class Participant{
                             //putting info into hashmap
                             Thread.sleep(2000);
                             for (ParticipantReceiver pR : participantReceivers) {
-                                participantVotingInRounds.put(pR.getVotingParticipantPort(), pR.getOtherParticipantVote());
+                                tempHashMap.put(pR.getVotingParticipantPort(), pR.getOtherParticipantVote());
                             }
 
+                            //current information being transferred to total information
+                            for (String port : tempHashMap.keySet()){
+                                participantVotingInRounds.put(port,tempHashMap.get(port));
+                            }
 
 
                             //passing the new updated hashmap
@@ -180,10 +189,13 @@ class Participant{
                                 pR.setParticipantVotingInRounds(participantVotingInRounds);
                             }
 
-                            //Logging end of round 1
+                            //deleting all entries.
+                            tempHashMap.clear();
+
+                            //Logging end of round 1 -------------------------------------
                             pLogger.endRound(1);
 
-                            //Logging start of round 2
+                            //Logging start of round 2 -----------------------------------
                             pLogger.beginRound(2);
 
                             //unlock first gate of the senders (2nd round of voting)
@@ -192,10 +204,35 @@ class Participant{
                                 pS.setFirstCheck();
                             }
 
+                            //sender stuff happens here
+
                             //unlock first gate of the receivers (2nd round of voting)
                             Thread.sleep(2000);
                             for (ParticipantReceiver pR : participantReceivers) {
                                 pR.setFirstCheck();
+                            }
+
+                            //trying to readd to temp hashmap
+                            Thread.sleep(2000);
+                            for (ParticipantReceiver pR : participantReceivers){
+                                tempHashMap.putAll(pR.getTempHashMap());
+                            }
+
+                            /*
+                            //testing printing the temp and total hashmaps
+                            Thread.sleep(2000);
+                            for (String port : tempHashMap.keySet()){
+                                System.out.println(port + " has voted (temp) "+ tempHashMap.get(port));;
+                            }
+                            for (String port : participantVotingInRounds.keySet()){
+                                System.out.println(port+ " has voted "+ participantVotingInRounds.get(port));;
+                            }*/
+
+                            if(participantVotingInRounds.equals(tempHashMap)){
+                                System.out.println("they are the same");
+                                secondRoundSame = true;
+                            }else{
+                                System.out.println("difference exists");
                             }
 
                             //unlock second gate of the receivers (2nd round of voting)
@@ -210,62 +247,63 @@ class Participant{
                                 pS.setSecondCheck();
                             }
 
+                            tempHashMap.clear();
+
                             //Logging end of round 2
                             pLogger.endRound(2);
 
                             /*
-                            //if there is an error
-                            if(!(numOfParticipants == participantVotingInRounds.size())) {
-                                int d = 0;
-                                while (failure) {
-                                    if (d != 0) {
-                                        //locks while loop gate
-                                        Thread.sleep(2000);
-                                        for (ParticipantSender pS : participantSenders) {
-                                            pS.setThirdCheck(false);
-                                        }
+                            //if there is an error with voting
+                            int d = 0;
+                            while (failure) {
 
-                                        //locks while loop gate
-                                        Thread.sleep(2000);
-                                        for (ParticipantReceiver pR : participantReceivers) {
-                                            pR.setThirdCheck(false);
-                                        }
-                                    }
-                                    //updating hashmap
-                                    Thread.sleep(2000);
-                                    for (ParticipantReceiver pR : participantReceivers) {
-                                        participantVotingInRounds = pR.getParticipantVotingInRounds();
-                                    }
-
-                                    //passing the new updated hashmap
+                                if (d != 0) {
+                                    //locks while loop gate
                                     Thread.sleep(2000);
                                     for (ParticipantSender pS : participantSenders) {
-                                        pS.setParticipantVotingInRounds(participantVotingInRounds);
+                                        pS.setThirdCheck(false);
+                                    }
+                                    //locks while loop gate
+                                    Thread.sleep(2000);
+                                    for (ParticipantReceiver pR : participantReceivers) {
+                                        pR.setThirdCheck(false);
+                                    }
+                                }
+
+                                //updating hashmap
+                                Thread.sleep(2000);
+                                for (ParticipantReceiver pR : participantReceivers) {
+                                    participantVotingInRounds = pR.getParticipantVotingInRounds();
+                                }
+                                //passing the new updated hashmap
+                                Thread.sleep(2000);
+                                for (ParticipantSender pS : participantSenders) {
+                                    pS.setParticipantVotingInRounds(participantVotingInRounds);
+                                }
+
+                                if (d != 0) {
+                                    //unlocks while loop gate
+                                    Thread.sleep(2000);
+                                    for (ParticipantSender pS : participantSenders) {
+                                        pS.setThirdCheck(true);
                                     }
 
-                                    if (d != 0) {
-                                        //unlocks while loop gate
-                                        Thread.sleep(2000);
-                                        for (ParticipantSender pS : participantSenders) {
-                                            pS.setThirdCheck(true);
-                                        }
-
-                                        //unlocks while loop gate
-                                        Thread.sleep(2000);
-                                        for (ParticipantReceiver pR : participantReceivers) {
-                                            pR.setThirdCheck(true);
-                                        }
-                                        //breaks loop if all votes are accounted for
-                                        if (numOfParticipants == participantVotingInRounds.size()) {
-                                            failure = true;
-                                        }
-
+                                    //unlocks while loop gate
+                                    Thread.sleep(2000);
+                                    for (ParticipantReceiver pR : participantReceivers) {
+                                        pR.setThirdCheck(true);
                                     }
-                                    d++;
+                                    //breaks loop if all votes are accounted for
+                                    if (numOfParticipants == participantVotingInRounds.size()) {
+                                        failure = true;
+                                    }
 
                                 }
-                            }
-*/
+                                d++;
+
+                            }*/
+
+
 
                             Thread.sleep(3000);
                             for (ParticipantReceiver pR : participantReceivers){
@@ -276,6 +314,10 @@ class Participant{
                             for (ParticipantSender pS : participantSenders){
                                 if (pS.getHasFailed()){
                                     otherParticipants.remove(String.valueOf(pS.getOtherPort()));
+
+                                }
+                                else{
+                                    logParticipantIDs.add(pS.getOtherPort());
                                 }
                             }
 
@@ -313,7 +355,7 @@ class Participant{
             out.println("OUTCOME " + getMostPopularVote(voteTally) + " "+ participantPortNumber + outcomeMsg);
             out.flush();
 
-            //converting strings to integers for log message
+            //adding participant ids for logger
             logParticipantIDs.add(participantPortNumber);
 
             //Logging outcome, and outcome msg
@@ -388,6 +430,8 @@ class Participant{
         Boolean failure = true;
         int numOfParticipants;
         HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
+        HashMap<String,String> tempHashMap = new HashMap<>();  //acts as buffer and for adding entries into the actual hashmap
+
         ParticipantLogger pLogger;
 
         //PrintWriter out;
@@ -441,14 +485,14 @@ class Participant{
                 //reading second round
                 line = in.readLine();
                 System.out.println(line);
+                for (int a = 1; a < line.split(" ").length; a=a+2) {
+                    System.out.println(line.split(" ")[a]+ " has a vote of " + line.split(" ")[a+1]);
+                    getTempHashMap().put(line.split(" ")[a], line.split(" ")[a+1]);
+                }
 
                 //updating a vote list for loggers
                 for (String portWithVote : getParticipantVotingInRounds().keySet()){
-                    //System.out.println(votingParticipantPort);
-                    //System.out.println(client.getPort());
-
                     if(!(portWithVote.equals(votingParticipantPort))){
-                        //System.out.println(portWithVote+ " IS NOT EQUAL TO " + votingParticipantPort);
                         voteList.add(new Vote(Integer.parseInt(portWithVote),getParticipantVotingInRounds().get(portWithVote)));
                     }
                 }
@@ -466,22 +510,25 @@ class Participant{
                 }
                 System.out.println("Exited second lock - receiver");
 
+                //recurse voting - receiver
+
                 /*
+                //sender should be unlocked first
                 //recursing voting -> making sure all votes are accounted for
-                    if (numOfParticipants != getParticipantVotingInRounds().size()) {
-                        while ((line = in.readLine()) != null && failure) {
-                            System.out.println(line);
-                            if (numOfParticipants != getParticipantVotingInRounds().size()) {
-                                for (int a = 1; a < line.split(" ").length; a++) {
-                                    for (String port : getParticipantVotingInRounds().keySet()) {
-                                        if (!(line.split(" ")[a].equals(port))) {
-                                            getParticipantVotingInRounds().put(port, line.split(" ")[a + 1]);
-                                        }
+                if (numOfParticipants != getParticipantVotingInRounds().size()) {
+                    while ((line = in.readLine()) != null && failure) {
+                        System.out.println(line);
+                        if (numOfParticipants != getParticipantVotingInRounds().size()) {
+                            for (int a = 1; a < line.split(" ").length; a++) {
+                                for (String port : getParticipantVotingInRounds().keySet()) {
+                                    if (!(line.split(" ")[a].equals(port))) {
+                                        getParticipantVotingInRounds().put(port, line.split(" ")[a + 1]);
                                     }
                                 }
-                            } else {
-                                failure = false;
                             }
+                        } else {
+                            failure = false;
+                        }
 
                             //third lock
                             System.out.println("Hit third lock - receiver");
@@ -493,8 +540,8 @@ class Participant{
                             System.out.println("Exited third lock - receiver");
 
                         }
-                    }
-                    */
+                    }*/
+
 
                 System.out.println("YAAS, IT WORKS - receiver");
 
@@ -550,6 +597,10 @@ class Participant{
             return this.participantVotingInRounds;
         }
 
+        public HashMap<String,String> getTempHashMap(){
+            return this.tempHashMap;
+        }
+
 
     }
 
@@ -565,10 +616,13 @@ class Participant{
             Boolean secondCheck = true;
             Boolean thirdCheck = true;
             Boolean hasFailed = false;
+            Boolean missingInformation = true;
             String voteChosen;
             int numOfParticipants;
             HashMap<String,String> participantVotingInRounds = new HashMap<>();  //selfport number, with vote
-            ParticipantLogger pLogger;
+            HashMap<String,String> tempHashMap = new HashMap<>();  //acts as buffer and for adding entries into the actual hashmap
+
+        ParticipantLogger pLogger;
 
         //PrintWriter out;
             //BufferedReader in;
@@ -662,24 +716,24 @@ class Participant{
 
                     /*
                     //future rounds
-                        int e = 0;
-                        while (failure) {
-                            if (numOfParticipants != getParticipantVotingInRounds().size() || e == 0) {
-                                for (String portWithVote : getParticipantVotingInRounds().keySet()) {
-                                    if (!(portWithVote.equals(selfPort))) {
-                                        votePortMsg = votePortMsg + " " + portWithVote + " " + getParticipantVotingInRounds().get(portWithVote);
-                                    }
+                    int roundCounter = 3;
+                    while (missingInformation) {
+                        if (numOfParticipants != getParticipantVotingInRounds().size()) {
+                            for (String portWithVote : getParticipantVotingInRounds().keySet()) {
+                                if (!(portWithVote.equals(selfPort))) {
+                                    votePortMsg = votePortMsg + " " + portWithVote + " " + getParticipantVotingInRounds().get(portWithVote);
                                 }
+                            }
 
                                 //sending the vote round 2
                                 out.println("VOTE" + votePortMsg);
                                 out.flush();
                             } else {
-                                failure = false;
+                                missingInformation = false;
                                 out.println("VOTE" + votePortMsg); //hmmm
                                 out.flush();
                             }
-                            e++;
+                            roundCounter++;
 
                             //third lock
                             System.out.println("Hit third lock - sender");
@@ -761,6 +815,10 @@ class Participant{
 
             public int getOtherPort(){
                 return this.otherPort;
+            }
+
+            public Boolean getMissingInformation(){
+                return this.missingInformation;
             }
     }
 
